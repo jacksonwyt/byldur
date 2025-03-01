@@ -1,79 +1,86 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model, Op } = require('sequelize');
+const sequelize = require('../config/database');
 
-const SubscriptionSchema = new mongoose.Schema({
+class Subscription extends Model {
+  // Static method to find active subscription for a user
+  static async findActiveForUser(userId) {
+    const now = new Date();
+    return await this.findOne({
+      where: {
+        userId,
+        status: 'active',
+        currentPeriodEnd: {
+          [Op.gt]: now
+        }
+      }
+    });
+  }
+
+  // Static method to cancel a subscription
+  static async cancelSubscription(subscriptionId) {
+    const subscription = await this.findByPk(subscriptionId);
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+    
+    subscription.status = 'canceled';
+    subscription.autoRenew = false;
+    return await subscription.save();
+  }
+}
+
+Subscription.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   planType: {
-    type: String,
-    enum: ['basic', 'pro'],
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      isIn: [['basic', 'pro', 'basic_ai', 'pro_ai', 'free']]
+    }
   },
   status: {
-    type: String,
-    enum: ['active', 'canceled', 'expired'],
-    default: 'active'
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'active',
+    validate: {
+      isIn: [['active', 'canceled', 'expired']]
+    }
   },
-  startDate: {
-    type: Date,
-    default: Date.now
+  stripeSubscriptionId: {
+    type: DataTypes.STRING
   },
-  endDate: {
-    type: Date,
-    required: true
+  currentPeriodStart: {
+    type: DataTypes.DATE
   },
-  priceInCents: {
-    type: Number,
-    required: true
+  currentPeriodEnd: {
+    type: DataTypes.DATE
   },
-  paymentMethod: {
-    type: String,
-    required: true
-  },
-  paymentId: {
-    type: String
+  cancelAtPeriodEnd: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   autoRenew: {
-    type: Boolean,
-    default: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
+}, {
+  sequelize,
+  modelName: 'subscription',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 });
 
-// Middleware to update the updatedAt field
-SubscriptionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-// Static method to find active subscription for a user
-SubscriptionSchema.statics.findActiveForUser = function(userId) {
-  return this.findOne({
-    userId,
-    status: 'active',
-    endDate: { $gt: new Date() }
-  });
-};
-
-// Static method to cancel a subscription
-SubscriptionSchema.statics.cancelSubscription = async function(subscriptionId) {
-  const subscription = await this.findById(subscriptionId);
-  if (!subscription) {
-    throw new Error('Subscription not found');
-  }
-  
-  subscription.status = 'canceled';
-  subscription.autoRenew = false;
-  return subscription.save();
-};
-
-module.exports = mongoose.model('Subscription', SubscriptionSchema); 
+module.exports = Subscription; 

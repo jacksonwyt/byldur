@@ -4,59 +4,21 @@ const axios = require('axios');
 const { isAuthenticated } = require('../middleware/auth');
 const User = require('../models/User');
 const AIUsage = require('../models/AIUsage');
+const aiUsageController = require('../controllers/aiUsageController');
 
-// ========== AI SUBSCRIPTION STATUS ==========
+// ========== AI USAGE & CREDITS ==========
 
-/**
- * @route GET /api/ai/usage
- * @desc Get current user's AI usage and subscription status
- * @access Private
- */
-router.get('/usage', isAuthenticated, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // Get user with subscription details
-    const user = await User.findById(userId).select('subscription aiCredits');
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Get AI usage history
-    const usageHistory = await AIUsage.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(10);
-    
-    // Check if user has active subscription
-    const hasActiveSubscription = user.subscription && 
-      user.subscription.status === 'active' && 
-      user.subscription.plan && 
-      (user.subscription.plan === 'basic_ai' || user.subscription.plan === 'pro_ai') &&
-      new Date(user.subscription.currentPeriodEnd) > new Date();
-    
-    // Calculate available credits
-    const availableCredits = hasActiveSubscription ? 
-      (user.aiCredits + (user.subscription.plan === 'basic_ai' ? 100 : 300)) : 
-      user.aiCredits;
-    
-    return res.json({
-      success: true,
-      hasActiveSubscription,
-      subscriptionPlan: user.subscription?.plan || null,
-      subscriptionStatus: user.subscription?.status || null,
-      currentPeriodEnd: user.subscription?.currentPeriodEnd || null,
-      baseCredits: hasActiveSubscription ? 
-        (user.subscription.plan === 'basic_ai' ? 100 : 300) : 0,
-      purchasedCredits: user.aiCredits || 0,
-      availableCredits,
-      usageHistory
-    });
-  } catch (error) {
-    console.error('Error getting AI usage:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+// Get AI usage statistics and history
+router.get('/usage', isAuthenticated, aiUsageController.getAIUsage);
+
+// Record AI usage
+router.post('/usage', isAuthenticated, aiUsageController.recordUsage);
+
+// Get AI credits
+router.get('/credits', isAuthenticated, aiUsageController.getAICredits);
+
+// Purchase AI credits
+router.post('/credits/purchase', isAuthenticated, aiUsageController.purchaseCredits);
 
 // ========== AI TEXT GENERATION ==========
 
@@ -150,6 +112,8 @@ router.post('/generate/text', isAuthenticated, async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// ========== AI COMPONENT GENERATION ==========
 
 /**
  * @route POST /api/ai/generate/component
@@ -402,7 +366,7 @@ router.post('/improve', isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== CLAUDE API HELPER ==========
+// ========== HELPER FUNCTIONS ==========
 
 /**
  * Helper function to call Claude API

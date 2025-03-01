@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -12,12 +11,11 @@ const xss = require('xss-clean');
 const morgan = require('morgan');
 const compression = require('compression');
 
+// Load Sequelize database connection
+const sequelize = require('./config/database');
+
 // Load models
-const Project = require('./models/Project');
-const User = require('./models/User');
-const AIUsage = require('./models/AIUsage');
-const AICredit = require('./models/AICredit');
-const Subscription = require('./models/Subscription');
+const { Project, User, AIUsage, AICredit, Subscription } = require('./models');
 
 dotenv.config();
 
@@ -83,17 +81,17 @@ app.use(helmet({
 // Add request sanitization
 app.use(xss());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
+// PostgreSQL connection
+sequelize.authenticate()
   .then(() => {
-    console.log('Connected to MongoDB successfully');
+    console.log('Connected to PostgreSQL successfully');
+    return sequelize.sync(); // { force: true } to recreate tables, be careful in production!
+  })
+  .then(() => {
+    console.log('Database synchronized');
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err);
-    console.log('Trying to connect to local MongoDB instance...');
-    mongoose.connect('mongodb://localhost:27017/byldur-website-builder')
-      .then(() => console.log('Connected to local MongoDB successfully'))
-      .catch(localErr => console.error('Local MongoDB connection error:', localErr));
+    console.error('PostgreSQL connection error:', err);
   });
 
 // Import route files
@@ -129,6 +127,11 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
+// Serve landing page at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/landing.html'));
+});
+
 // Serve the SPA for any other route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -152,7 +155,7 @@ function gracefulShutdown() {
     console.log('Server closed');
     
     // Close database connection
-    mongoose.connection.close(false, () => {
+    sequelize.close().then(() => {
       console.log('Database connection closed');
       process.exit(0);
     });

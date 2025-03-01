@@ -1,64 +1,88 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/database');
 
-const AICreditSchema = new mongoose.Schema({
+class AICredit extends Model {
+  // Static method to process a completed payment
+  static async processCompletedPayment(paymentId, userId) {
+    // Find the credit purchase
+    const creditPurchase = await this.findOne({ 
+      where: { paymentId }
+    });
+    
+    if (!creditPurchase) {
+      throw new Error('Credit purchase not found');
+    }
+    
+    if (creditPurchase.status === 'completed') {
+      return { success: true, alreadyProcessed: true };
+    }
+    
+    // Transaction will be handled in the controller
+    const User = require('./User');
+    
+    // Find the user
+    const user = await User.findByPk(creditPurchase.userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Update the credit purchase status
+    creditPurchase.status = 'completed';
+    await creditPurchase.save();
+    
+    // Add credits to the user
+    await user.addAICredits(creditPurchase.amount);
+    
+    return { success: true, credits: creditPurchase.amount };
+  }
+}
+
+AICredit.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   amount: {
-    type: Number,
-    required: true,
-    min: 1
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1
+    }
   },
   priceInCents: {
-    type: Number,
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   paymentMethod: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   paymentId: {
-    type: String
+    type: DataTypes.STRING
   },
   status: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'pending',
+    validate: {
+      isIn: [['pending', 'completed', 'failed', 'refunded']]
+    }
   }
+}, {
+  sequelize,
+  modelName: 'ai_credit',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false
 });
 
-// Static method to process a completed payment
-AICreditSchema.statics.processCompletedPayment = async function(paymentId, User) {
-  const creditPurchase = await this.findOne({ paymentId });
-  
-  if (!creditPurchase) {
-    throw new Error('Credit purchase not found');
-  }
-  
-  if (creditPurchase.status === 'completed') {
-    return { success: true, alreadyProcessed: true };
-  }
-  
-  // Find the user and add credits
-  const user = await User.findById(creditPurchase.userId);
-  if (!user) {
-    throw new Error('User not found');
-  }
-  
-  // Update the credit purchase status
-  creditPurchase.status = 'completed';
-  await creditPurchase.save();
-  
-  // Add credits to the user
-  await user.addAICredits(creditPurchase.amount);
-  
-  return { success: true, credits: creditPurchase.amount };
-};
-
-module.exports = mongoose.model('AICredit', AICreditSchema); 
+module.exports = AICredit; 
