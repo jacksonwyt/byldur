@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byldur - Dashboard</title>
+  <link rel="stylesheet" href="/custom.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+  <nav class="dashboard-nav">
+    <div class="nav-brand">
+      <img src="/assets/byldur-logo.svg" alt="Byldur">
+      <span>Byldur</span>
+    </div>
+    <div class="nav-links">
+      <a href="/dashboard.html" class="active">
+        <i class="fas fa-th-large"></i> Dashboard
+      </a>
+      <a href="/subscription.html">
+        <i class="fas fa-crown"></i> Subscription
+      </a>
+      <a href="#" id="logout-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </nav>
+  
+  <main class="dashboard-container">
+    <header class="dashboard-header">
+      <h1>Welcome, <span id="username-display">User</span>!</h1>
+      <button id="new-project-btn" class="primary-btn">
+        <i class="fas fa-plus"></i> New Project
+      </button>
+    </header>
+    
+    <!-- AI Status Section -->
+    <section class="dashboard-section ai-status-section">
+      <h2>AI Assistant Status</h2>
+      <div class="ai-status-container" id="ai-status-container">
+        <div class="ai-status-loading">
+          <div class="spinner"></div>
+          <p>Checking AI subscription status...</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Projects Section -->
+    <section class="dashboard-section">
+      <h2>My Projects</h2>
+      <div class="projects-grid" id="projects-container">
+        <!-- Projects will be loaded here dynamically -->
+        <div class="loading-indicator" id="projects-loading">
+          <div class="spinner"></div>
+          <p>Loading projects...</p>
+        </div>
+      </div>
+      <div class="no-projects hidden" id="no-projects">
+        <p>You don't have any projects yet. Create your first project to get started!</p>
+      </div>
+    </section>
+  </main>
+  
+  <!-- New Project Modal -->
+  <div id="new-project-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-new-project-modal">&times;</span>
+      <h2>Create New Project</h2>
+      <form id="new-project-form">
+        <div class="form-group">
+          <label for="project-name">Project Name</label>
+          <input type="text" id="project-name" name="projectName" required>
+        </div>
+        <div class="form-group">
+          <label for="project-description">Description (optional)</label>
+          <textarea id="project-description" name="description" placeholder="Briefly describe your project"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Start with:</label>
+          <div class="template-options">
+            <label class="template-option">
+              <input type="radio" name="template" value="blank" checked>
+              <div class="option-content">
+                <i class="fas fa-file"></i>
+                <span>Blank Page</span>
+              </div>
+            </label>
+            <label class="template-option">
+              <input type="radio" name="template" value="template">
+              <div class="option-content">
+                <i class="fas fa-palette"></i>
+                <span>Template</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="primary-btn">Create Project</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Project Options Modal -->
+  <div id="project-options-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-project-options-modal">&times;</span>
+      <h2 id="project-options-title">Project Options</h2>
+      <div class="project-options">
+        <button class="primary-btn" id="edit-project-btn">
+          <i class="fas fa-edit"></i> Edit Project
+        </button>
+        <button class="secondary-btn" id="duplicate-project-btn">
+          <i class="fas fa-copy"></i> Duplicate Project
+        </button>
+        <button class="danger-btn" id="delete-project-btn">
+          <i class="fas fa-trash-alt"></i> Delete Project
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          // Not authenticated, redirect to login
+          window.location.href = '/login.html';
+          return null;
+        }
+        
+        const data = await response.json();
+        return data.user;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = '/login.html';
+        return null;
+      }
+    }
+    
+    // Load projects
+    async function loadProjects() {
+      try {
+        const response = await fetch('/api/projects', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load projects');
+        }
+        
+        const projects = await response.json();
+        return projects;
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        return [];
+      }
+    }
+    
+    // Load AI status
+    async function loadAIStatus() {
+      try {
+        const response = await fetch('/api/ai/usage', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load AI status');
+        }
+        
+        const aiStatus = await response.json();
+        return aiStatus;
+      } catch (error) {
+        console.error('Error loading AI status:', error);
+        return null;
+      }
+    }
+    
+    // Format date
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    // Display projects
+    function displayProjects(projects) {
+      const projectsContainer = document.getElementById('projects-container');
+      const projectsLoading = document.getElementById('projects-loading');
+      const noProjects = document.getElementById('no-projects');
+      
+      // Remove loading indicator
+      projectsLoading.remove();
+      
+      if (projects.length === 0) {
+        noProjects.classList.remove('hidden');
+        return;
+      }
+      
+      // Clear container before adding projects
+      projectsContainer.innerHTML = '';
+      
+      projects.forEach(project => {
+        const projectCard = document.createElement('div');
+        projectCard.className = 'project-card';
+        projectCard.dataset.id = project._id;
+        
+        projectCard.innerHTML = `
+          <div class="project-header">
+            <h3>${project.name}</h3>
+            <button class="project-options-btn" data-id="${project._id}">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+          <div class="project-info">
+            <p>${project.description || 'No description'}</p>
+            <p class="project-date">Last updated: ${formatDate(project.updatedAt)}</p>
+          </div>
+          <div class="project-actions">
+            <button class="edit-btn" data-id="${project._id}">Edit</button>
+          </div>
+        `;
+        
+        projectsContainer.appendChild(projectCard);
+      });
+      
+      // Add event listeners for project cards
+      document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const projectId = this.dataset.id;
+          window.location.href = `/index.html?id=${projectId}`;
+        });
+      });
+      
+      document.querySelectorAll('.project-options-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const projectId = this.dataset.id;
+          const project = projects.find(p => p._id === projectId);
+          
+          if (project) {
+            showProjectOptionsModal(project);
+          }
+        });
+      });
+    }
+    
+    // Display AI status
+    function displayAIStatus(aiStatus) {
+      const aiStatusContainer = document.getElementById('ai-status-container');
+      
+      if (!aiStatus) {
+        aiStatusContainer.innerHTML = `
+          <div class="ai-status status-error">
+            <h2>AI Status Unavailable</h2>
+            <p>Unable to load AI subscription information. Please try again later.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Determine status class based on subscription
+      let statusClass = 'status-none';
+      let statusText = 'No Active AI Subscription';
+      let creditsText = 'Purchase credits or subscribe to use AI features.';
+      
+      if (aiStatus.hasActiveSubscription) {
+        statusClass = 'status-active';
+        statusText = `Active AI Subscription: ${aiStatus.subscriptionPlan === 'basic_ai' ? 'Basic AI' : 'Pro AI'}`;
+        creditsText = `Your subscription includes ${aiStatus.baseCredits} credits per month.`;
+      } else if (aiStatus.subscriptionStatus === 'canceled') {
+        statusClass = 'status-canceled';
+        statusText = 'Canceled AI Subscription';
+        creditsText = `Your subscription will end on ${formatDate(aiStatus.currentPeriodEnd)}.`;
+      }
+      
+      // Calculate percentage of credits used
+      const percentUsed = aiStatus.availableCredits > 0 
+        ? Math.min(100, (aiStatus.purchasedCredits / aiStatus.availableCredits) * 100)
+        : 0;
+      
+      aiStatusContainer.innerHTML = `
+        <div class="ai-status ${statusClass}">
+          <h2>${statusText}</h2>
+          <div class="usage-info">
+            <p>${creditsText}</p>
+            <p>Available Credits: <strong>${aiStatus.availableCredits}</strong></p>
+            <div class="usage-meter">
+              <div class="usage-bar" style="width: ${percentUsed}%"></div>
+            </div>
+          </div>
+          <div class="ai-actions">
+            <a href="/subscription.html" class="primary-btn">
+              ${aiStatus.hasActiveSubscription ? 'Manage Subscription' : 'Subscribe to AI'}
+            </a>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Show new project modal
+    function showNewProjectModal() {
+      const modal = document.getElementById('new-project-modal');
+      modal.style.display = 'block';
+    }
+    
+    // Show project options modal
+    function showProjectOptionsModal(project) {
+      const modal = document.getElementById('project-options-modal');
+      const title = document.getElementById('project-options-title');
+      const editBtn = document.getElementById('edit-project-btn');
+      const duplicateBtn = document.getElementById('duplicate-project-btn');
+      const deleteBtn = document.getElementById('delete-project-btn');
+      
+      title.textContent = `Project: ${project.name}`;
+      
+      // Set up button actions
+      editBtn.onclick = function() {
+        window.location.href = `/index.html?id=${project._id}`;
+      };
+      
+      duplicateBtn.onclick = function() {
+        duplicateProject(project._id);
+      };
+      
+      deleteBtn.onclick = function() {
+        if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
+          deleteProject(project._id);
+        }
+      };
+      
+      modal.style.display = 'block';
+    }
+    
+    // Duplicate project
+    async function duplicateProject(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/duplicate`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to duplicate project');
+        }
+        
+        // Close modal and reload projects
+        document.getElementById('project-options-modal').style.display = 'none';
+        init();
+      } catch (error) {
+        console.error('Error duplicating project:', error);
+        alert('Failed to duplicate project. Please try again.');
+      }
+    }
+    
+    // Delete project
+    async function deleteProject(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete project');
+        }
+        
+        // Close modal and reload projects
+        document.getElementById('project-options-modal').style.display = 'none';
+        init();
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        alert('Failed to delete project. Please try again.');
+      }
+    }
+    
+    // Create new project
+    async function createProject(formData) {
+      try {
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: formData.get('projectName'),
+            description: formData.get('description') || ''
+          }),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create project');
+        }
+        
+        const project = await response.json();
+        return project;
+      } catch (error) {
+        console.error('Error creating project:', error);
+        return null;
+      }
+    }
+    
+    // Initialize page
+    async function init() {
+      // Check authentication and get user data
+      const user = await checkAuth();
+      
+      if (!user) {
+        return;
+      }
+      
+      // Update username display
+      document.getElementById('username-display').textContent = user.username;
+      
+      // Load projects
+      const projects = await loadProjects();
+      displayProjects(projects);
+      
+      // Load AI status
+      const aiStatus = await loadAIStatus();
+      displayAIStatus(aiStatus);
+    }
+    
+    // Set up event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize page
+      init();
+      
+      // Logout link
+      document.getElementById('logout-link').addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+          
+          window.location.href = '/login.html';
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+      });
+      
+      // New project button
+      document.getElementById('new-project-btn').addEventListener('click', function() {
+        showNewProjectModal();
+      });
+      
+      // Close new project modal
+      document.getElementById('close-new-project-modal').addEventListener('click', function() {
+        document.getElementById('new-project-modal').style.display = 'none';
+      });
+      
+      // Close project options modal
+      document.getElementById('close-project-options-modal').addEventListener('click', function() {
+        document.getElementById('project-options-modal').style.display = 'none';
+      });
+      
+      // New project form submission
+      document.getElementById('new-project-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const project = await createProject(formData);
+        
+        if (project) {
+          // Close modal
+          document.getElementById('new-project-modal').style.display = 'none';
+          
+          // Redirect to editor with new project
+          window.location.href = `/index.html?id=${project._id}`;
+        } else {
+          alert('Failed to create project. Please try again.');
+        }
+      });
+      
+      // Close modals when clicking outside
+      window.addEventListener('click', function(event) {
+        const newProjectModal = document.getElementById('new-project-modal');
+        const projectOptionsModal = document.getElementById('project-options-modal');
+        
+        if (event.target === newProjectModal) {
+          newProjectModal.style.display = 'none';
+        }
+        
+        if (event.target === projectOptionsModal) {
+          projectOptionsModal.style.display = 'none';
+        }
+      });
+    });
+  <script src="/js/dashboard.js"></script>
+</body>
+</html> 

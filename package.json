@@ -1,0 +1,1 @@
+{"name":"byldur","version":"1.0.0","description":"AI-Powered Website Builder","main":"server/server.js","scripts":{"start":"node server/server.js","dev":"nodemon server/server.js"},"author":"","license":"MIT","dependencies":{},"devDependencies":{}}
