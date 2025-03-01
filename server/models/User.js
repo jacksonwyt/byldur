@@ -1,3 +1,4 @@
+// server/models/User.js - Updated with GitHub fields
 const { DataTypes, Model } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const sequelize = require('../config/database');
@@ -31,6 +32,8 @@ class User extends Model {
     // Remove sensitive information
     delete obj.password;
     delete obj.stripeCustomerId;
+    // Comment out GitHub token since it's not in the database yet
+    // delete obj.githubToken; // Don't expose GitHub token
     
     return obj;
   }
@@ -71,6 +74,23 @@ User.init({
   },
   lastLogin: {
     type: DataTypes.DATE
+  },
+  // Comment out GitHub-related fields
+  /*
+  githubToken: {
+    type: DataTypes.STRING
+  },
+  githubConnected: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  githubUsername: {
+    type: DataTypes.STRING
+  },
+  */
+  isAdmin: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   sequelize,

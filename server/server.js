@@ -1,3 +1,4 @@
+// Updated server/server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -10,6 +11,7 @@ const helmet = require('helmet');
 const xss = require('xss-clean');
 const morgan = require('morgan');
 const compression = require('compression');
+const session = require('express-session');
 
 // Load Sequelize database connection
 const sequelize = require('./config/database');
@@ -23,6 +25,17 @@ const app = express();
 
 // Set up request logging
 app.use(morgan('dev'));
+
+// Set up session management
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'byldur-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Set up body parsing
 app.use(bodyParser.json());
@@ -69,11 +82,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://js.stripe.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://js.stripe.com", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://unpkg.com"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-      connectSrc: ["'self'", "https://api.anthropic.com", "https://api.stripe.com"]
+      connectSrc: ["'self'", "https://api.anthropic.com", "https://api.stripe.com", "https://api.github.com"]
     }
   }
 }));
@@ -99,12 +112,16 @@ const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const aiRoutes = require('./routes/ai');
 const subscriptionRoutes = require('./routes/subscriptions');
+const githubRoutes = require('./routes/github'); // New GitHub routes
+const templateRoutes = require('./routes/templates'); // New Template routes
 
 // Register routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/github', githubRoutes); // Add GitHub routes
+app.use('/api/templates', templateRoutes); // Add Template routes
 
 // Cache public project routes
 app.get('/api/public/projects/:id', cache('1 hour'), async (req, res) => {
@@ -125,6 +142,11 @@ app.get('/api/public/projects/:id', cache('1 hour'), async (req, res) => {
 // For any other API route not found
 app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Special handling for editor route - no authentication required
+app.get('/editor.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/editor.html'));
 });
 
 // Serve landing page at root

@@ -31,12 +31,12 @@ router.post('/register', validateRegistration, async (req, res) => {
     const { username, email, password } = req.body;
     
     // Check if user already exists
-    const existingUserByEmail = await User.findOne({ email });
+    const existingUserByEmail = await User.findOne({ where: { email } });
     if (existingUserByEmail) {
       return res.status(400).json({ error: 'Email already in use' });
     }
     
-    const existingUserByUsername = await User.findOne({ username });
+    const existingUserByUsername = await User.findOne({ where: { username } });
     if (existingUserByUsername) {
       return res.status(400).json({ error: 'Username already taken' });
     }
@@ -85,7 +85,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byldur Website Builder</title>
+  <link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="/custom.css">
+  <script src="https://unpkg.com/grapesjs/dist/grapes.min.js"></script>
+  <script src="/js/editor.js"></script>
+</head>
+<body>
+  <nav class="editor-navbar">
+    <div class="navbar-brand">
+      <img src="/assets/byldur-logo.svg" alt="Byldur" class="navbar-logo">
+    </div>
+    
+    <div class="navbar-actions">
+      <button id="save-btn" class="action-btn save-btn">
+        <i class="fa fa-save"></i> Save
+      </button>
+      <button id="preview-btn" class="action-btn preview-btn">
+        <i class="fa fa-eye"></i> Preview
+      </button>
+      <button id="publish-btn" class="action-btn publish-btn">
+        <i class="fa fa-globe"></i> Publish
+      </button>
+      <button id="github-sync-btn" class="action-btn">
+        <i class="fab fa-github"></i> GitHub Sync
+      </button>
+      <button id="ai-assist-btn" class="action-btn ai-btn">
+        <i class="fa fa-magic"></i> AI Assist
+      </button>
+      <button id="saveLocalBtn" class="action-btn">
+        <i class="fa fa-download"></i> Save to Device
+      </button>
+      <button id="loadFileBtn" class="action-btn">
+        <i class="fa fa-upload"></i> Load Project
+      </button>
+      <a href="/" class="action-btn">
+        <i class="fa fa-home"></i> Home
+      </a>
+    </div>
+  </nav>
+
+  <div id="editor-container">
+    <!-- GrapesJS editor will be initialized here -->
+    <div id="gjs"></div>
+  </div>
+
+  <!-- Add loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading your project...</p>
+  </div>
+
+  <!-- File input for loading projects -->
+  <input type="file" id="projectFileInput" accept=".json" style="display: none;">
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-auth-modal">&times;</span>
+      <h2 id="auth-modal-title">Sign in to Continue</h2>
+      <p id="auth-modal-message">Please sign in to use this feature</p>
+      
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Login</button>
+        <button class="tab" data-tab="register">Register</button>
+      </div>
+      
+      <div class="tab-content active" id="login-tab">
+        <form id="login-form">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+          <div id="login-error" class="form-error"></div>
+          <button type="submit" class="primary-btn">Login</button>
+        </form>
+      </div>
+      
+      <div class="tab-content" id="register-tab">
+        <form id="register-form">
+          <div class="form-group">
+            <label for="register-username">Username</label>
+            <input type="text" id="register-username" name="username" required>
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email Address</label>
+            <input type="email" id="register-email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" name="password" minlength="6" required>
+          </div>
+          <div id="register-error" class="form-error"></div>
+          <button type="submit" class="primary-btn">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Modal -->
+  <div id="subscription-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-subscription-modal">&times;</span>
+      <h2>Upgrade to Use AI Features</h2>
+      <p>Unlock the power of AI to help build your website faster</p>
+      
+      <div class="subscription-options">
+        <div class="subscription-option">
+          <h3>Monthly Plan</h3>
+          <p class="price">$19.99<span>/month</span></p>
+          <ul>
+            <li>Unlimited AI generations</li>
+            <li>Access to all AI templates</li>
+            <li>Component improvement</li>
+            <li>Priority support</li>
+          </ul>
+          <button class="subscription-btn" data-plan="monthly">Subscribe</button>
+        </div>
+        
+        <div class="subscription-option featured">
+          <div class="option-tag">Best Value</div>
+          <h3>Annual Plan</h3>
+          <p class="price">$199.99<span>/year</span></p>
+          <p class="savings">Save 16%</p>
+          <ul>
+            <li>Unlimited AI generations</li>
+            <li>Access to all AI templates</li>
+            <li>Component improvement</li>
+            <li>Priority support</li>
+            <li>Annual users workshop</li>
+          </ul>
+          <button class="subscription-btn" data-plan="annual">Subscribe</button>
+        </div>
+        
+        <div class="subscription-option">
+          <h3>Pay-As-You-Go</h3>
+          <p class="price">$9.99<span>/10 credits</span></p>
+          <ul>
+            <li>No monthly commitment</li>
+            <li>1 credit per generation</li>
+            <li>Credits never expire</li>
+            <li>Standard support</li>
+          </ul>
+          <button class="subscription-btn" data-plan="credits">Buy Credits</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitHub Sync Modal -->
+  <div id="github-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-github-modal">&times;</span>
+      <h2>Sync with GitHub</h2>
+      
+      <div id="github-auth-section">
+        <p>Connect your GitHub account to sync your project</p>
+        <button id="github-auth-btn" class="github-btn">
+          <i class="fab fa-github"></i> Connect with GitHub
+        </button>
+      </div>
+      
+      <div id="github-sync-section" style="display: none;">
+        <div class="form-group">
+          <label for="repo-name">Repository Name</label>
+          <input type="text" id="repo-name" placeholder="my-website">
+        </div>
+        
+        <div class="form-group">
+          <label for="repo-description">Description (optional)</label>
+          <input type="text" id="repo-description" placeholder="My Byldur website">
+        </div>
+        
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="repo-private"> 
+            Private Repository
+          </label>
+        </div>
+        
+        <div class="github-actions">
+          <button id="sync-to-github-btn" class="primary-btn">
+            <i class="fas fa-upload"></i> Push to GitHub
+          </button>
+          <button id="pull-from-github-btn" class="secondary-btn">
+            <i class="fas fa-download"></i> Pull from GitHub
+          </button>
+        </div>
+        
+        <div class="github-deploy">
+          <h3>Deployment</h3>
+          <p>Deploy your website to GitHub Pages</p>
+          <button id="deploy-github-pages-btn" class="github-btn">
+            <i class="fas fa-rocket"></i> Deploy to GitHub Pages
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project name input modal -->
+  <div id="project-name-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-name-modal">&times;</span>
+      <h2>Save Your Project</h2>
+      <div class="form-group">
+        <label for="projectName">Project Name</label>
+        <input type="text" id="projectName" placeholder="Enter a name for your project">
+      </div>
+      <div class="form-group">
+        <label for="projectDescription">Description (optional)</label>
+        <textarea id="projectDescription" placeholder="Briefly describe your project"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="isPublic"> 
+          Make project public
+        </label>
+      </div>
+      <button id="confirm-save" class="primary-btn">Save Project</button>
+    </div>
+  </div>
+
+  <!-- Preview modal -->
+  <div id="preview-modal" class="modal">
+    <div class="modal-content preview-modal-content">
+      <span class="close-modal" id="close-preview-modal">&times;</span>
+      <h2>Preview</h2>
+      <div class="preview-wrapper">
+        <iframe id="preview-iframe" sandbox="allow-scripts"></iframe>
+      </div>
+      <div class="preview-controls">
+        <button class="preview-device-btn active" data-device="desktop">
+          <i class="fas fa-desktop"></i> Desktop
+        </button>
+        <button class="preview-device-btn" data-device="tablet">
+          <i class="fas fa-tablet-alt"></i> Tablet
+        </button>
+        <button class="preview-device-btn" data-device="mobile">
+          <i class="fas fa-mobile-alt"></i> Mobile
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
