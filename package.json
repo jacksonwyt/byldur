@@ -5,12 +5,17 @@
     "main": "server/server.js",
     "scripts": {
         "start": "node server/server.js",
-        "dev": "nodemon server/server.js",
+        "server": "nodemon server/server.js",
+        "client": "cd app && npm start",
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "install:all": "npm install && cd server && npm install && cd ../app && npm install",
+        "build": "cd app && npm run build",
         "seed": "node server/scripts/seed-templates.js"
     },
     "author": "",
     "license": "MIT",
     "devDependencies": {
+        "concurrently": "^8.2.2",
         "nodemon": "^3.1.9"
     },
     "dependencies": {

@@ -26,6 +26,13 @@ const app = express();
 // Set up request logging
 app.use(morgan('dev'));
 
+// Trust proxy - configure properly for environment
+// In development, avoid the trust proxy setting entirely
+if (process.env.NODE_ENV === 'production') {
+  // In production, use more specific trust proxy settings
+  app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+}
+
 // Set up session management
 app.use(session({
   secret: process.env.SESSION_SECRET || 'byldur-secret',
@@ -44,12 +51,9 @@ app.use(cookieParser());
 // Handle Stripe webhook with raw body
 app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
 
-// Set up static file serving
-app.use(express.static(path.join(__dirname, '../public')));
-
 // Set up CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
   credentials: true
 }));
 
@@ -59,18 +63,26 @@ app.use(compression());
 // Add caching middleware for certain routes
 const cache = apicache.middleware;
 
-// Add rate limiting
+// Add rate limiting with trusted proxies configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests, please try again later'
+  message: 'Too many requests, please try again later',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip X-Forwarded-For validation in development to avoid the error
+  validateIpAddress: process.env.NODE_ENV === 'production',
 });
 
 // Apply stricter rate limiting to AI routes
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // limit each IP to 20 AI requests per windowMs
-  message: 'Too many AI requests, please try again later'
+  message: 'Too many AI requests, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip X-Forwarded-For validation in development to avoid the error
+  validateIpAddress: process.env.NODE_ENV === 'production',
 });
 
 // Apply rate limiting to all API requests
@@ -83,9 +95,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://js.stripe.com", "https://unpkg.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://unpkg.com", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "https://api.anthropic.com", "https://api.stripe.com", "https://api.github.com"]
     }
   }
@@ -144,20 +156,31 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Special handling for editor route - no authentication required
-app.get('/editor.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/editor.html'));
-});
+// Migration: Add redirects from old HTML pages to new React routes
+const redirectMap = {
+  '/index.html': '/',
+  '/login.html': '/login',
+  '/dashboard.html': '/dashboard',
+  '/editor.html': '/editor',
+  '/landing.html': '/',
+  '/subscription.html': '/subscription'
+};
 
-// Serve landing page at root
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/landing.html'));
-});
+// Serve static assets from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '../app/build')));
 
-// Serve the SPA for any other route
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+  // All remaining requests return the React app, so it can handle routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../app/build', 'index.html'));
+  });
+} else {
+  // In development, we'll redirect to the React dev server
+  app.get('*', (req, res) => {
+    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3001');
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -190,5 +213,6 @@ function gracefulShutdown() {
   }, 30000);
 }
 
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Set the port
+const port = 5001;
+const server = app.listen(port, () => console.log(`Server running on port ${port}`));
