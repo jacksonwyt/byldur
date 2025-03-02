@@ -9,7 +9,7 @@
         "client": "cd app && npm start",
         "dev": "concurrently \"npm run server\" \"npm run client\"",
         "install:all": "npm install && cd server && npm install && cd ../app && npm install",
-        "build": "cd app && npm run build",
+        "build": "cd app && npm install && npm run build",
         "seed": "node server/scripts/seed-templates.js"
     },
     "author": "",
