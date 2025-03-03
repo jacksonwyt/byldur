@@ -12,7 +12,7 @@ import {
   FaChevronDown 
 } from 'react-icons/fa';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import useAuthApi from '../../hooks/useAuthApi';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -249,7 +249,7 @@ const routeTitles = {
 };
 
 const DashboardHeader = ({ toggleSidebar }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthApi();
   const { darkMode, toggleDarkMode } = useTheme();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaMagic, FaPaintBrush, FaMobileAlt, FaRocket, FaCog, FaShieldAlt, FaCheck, FaArrowRight, FaTools, FaPuzzlePiece, FaRegEdit } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 // Styled components for the landing page
 const HeroSection = styled.section`
@@ -330,19 +330,19 @@ const FreeBanner = styled.div`
 `;
 
 const Home = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthApi();
   
   // Determine where to direct users based on authentication status
   const getStartedLink = isAuthenticated ? '/dashboard' : '/register';
   const dashboardLink = isAuthenticated ? '/dashboard' : '/register';
   const editorLink = isAuthenticated ? '/projects/new' : '/register';
-  
+ 
   return (
     <>
       <HeroSection id="hero">
         <HeroContent>
           <HeroTitle>Build Websites with AI</HeroTitle>
-          <HeroSubtitle>Create beautiful, responsive websites in minutes with Byldur's AI-powered tools. No coding required.</HeroSubtitle>
+          <HeroSubtitle>Create beautiful, responsive websites in minutes with Byldur&apos;s AI-powered tools. No coding required.</HeroSubtitle>
           <FreeBanner>
             <FaCheck /> All Core Features Available for FREE
           </FreeBanner>

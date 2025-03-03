@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { FaExclamationTriangle, FaHome, FaArrowLeft } from 'react-icons/fa';
-import Button from './Button';
+import { Button } from '../ui';
 
 const NotFoundContainer = styled.div`
   display: flex;
@@ -59,7 +59,7 @@ const NotFound = () => {
       <ErrorCode>404</ErrorCode>
       <ErrorMessage>Page Not Found</ErrorMessage>
       <ErrorDescription>
-        Oops! The page you're looking for doesn't exist or has been moved.
+        Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
         Check the URL or navigate back to safety using the buttons below.
       </ErrorDescription>
       <ButtonContainer>

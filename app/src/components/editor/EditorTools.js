@@ -284,12 +284,13 @@ const EditorTools = () => {
           content: '<button class="button">Click me</button>'
         });
         break;
-      case 'custom':
+      case 'custom': {
         const customHTML = prompt('Enter your custom HTML:', '<div class="custom">Custom content</div>');
         if (customHTML) {
           editor.addComponents(customHTML);
         }
         break;
+      }
       default:
         break;
     }

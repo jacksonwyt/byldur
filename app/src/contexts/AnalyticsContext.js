@@ -2,24 +2,18 @@ import React, { createContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   initializeAnalytics, 
-  trackPageView, 
-  trackAuthEvent,
-  trackFeatureUsage,
-  trackProjectEvent,
-  trackEditorEvent,
-  trackSubscriptionEvent,
-  trackError,
-  trackTiming,
+  trackPageView,
+  trackEvent,
   setUserProperties,
-  trackCustomEvent
+  CATEGORIES
 } from '../services/analyticsService';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 export const AnalyticsContext = createContext();
 
 export const AnalyticsProvider = ({ children }) => {
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuthApi();
   const [initialized, setInitialized] = useState(false);
   
   // Initialize analytics
@@ -48,50 +42,25 @@ export const AnalyticsProvider = ({ children }) => {
     }
   }, [initialized, isAuthenticated, user]);
   
-  // Define analytics tracking methods to expose through context
+  // Define analytics tracking methods
   const analytics = {
     // Auth events
-    trackSignIn: (method = 'direct') => trackAuthEvent('sign_in', method),
-    trackSignUp: (method = 'direct') => trackAuthEvent('sign_up', method),
-    trackSignOut: () => trackAuthEvent('sign_out'),
-    trackPasswordReset: () => trackAuthEvent('password_reset'),
-    
-    // Feature usage
-    trackFeatureUsage: (feature, action, label) => trackFeatureUsage(feature, action, label),
+    trackAuth: (action, method = 'direct') => trackEvent(CATEGORIES.AUTH, action, method),
     
     // Project events
-    trackProjectCreated: (projectId) => trackProjectEvent('created', projectId),
-    trackProjectUpdated: (projectId) => trackProjectEvent('updated', projectId),
-    trackProjectDeleted: (projectId) => trackProjectEvent('deleted', projectId),
-    trackProjectPublished: (projectId) => trackProjectEvent('published', projectId),
-    trackProjectUnpublished: (projectId) => trackProjectEvent('unpublished', projectId),
-    trackProjectDeployed: (projectId) => trackProjectEvent('deployed', projectId),
-    trackProjectDuplicated: (projectId) => trackProjectEvent('duplicated', projectId),
+    trackProject: (action, projectId) => trackEvent(CATEGORIES.PROJECT, action, projectId),
     
     // Editor events
-    trackEditorOpened: (projectId) => trackEditorEvent('opened', projectId),
-    trackComponentAdded: (componentType) => trackEditorEvent('component_added', componentType),
-    trackComponentDeleted: (componentType) => trackEditorEvent('component_deleted', componentType),
-    trackStyleChanged: () => trackEditorEvent('style_changed'),
-    trackContentSaved: () => trackEditorEvent('content_saved'),
-    trackAIPromptSent: () => trackEditorEvent('ai_prompt_sent'),
-    trackAIResponseApplied: () => trackEditorEvent('ai_response_applied'),
+    trackEditor: (action, label = null) => trackEvent(CATEGORIES.EDITOR, action, label),
     
     // Subscription events
-    trackSubscriptionViewed: () => trackSubscriptionEvent('viewed_plans'),
-    trackSubscriptionStarted: (plan) => trackSubscriptionEvent('subscription_started', plan),
-    trackSubscriptionChanged: (plan) => trackSubscriptionEvent('subscription_changed', plan),
-    trackSubscriptionCancelled: (plan) => trackSubscriptionEvent('subscription_cancelled', plan),
-    trackPaymentFailed: () => trackSubscriptionEvent('payment_failed'),
+    trackSubscription: (action, plan = null) => trackEvent(CATEGORIES.SUBSCRIPTION, action, plan),
+    
+    // Feature usage
+    trackFeature: (feature, action, label) => trackEvent(CATEGORIES.FEATURE, `${feature}:${action}`, label),
     
     // Error tracking
-    trackError: (errorType, errorMessage) => trackError(errorType, errorMessage),
-    
-    // Timing measurements
-    trackTiming: (category, variable, value) => trackTiming(category, variable, value),
-    
-    // Custom events
-    trackCustomEvent: (category, action, label, value) => trackCustomEvent(category, action, label, value),
+    trackError: (errorType, errorMessage) => trackEvent(CATEGORIES.ERROR, errorType, errorMessage),
   };
   
   return (
@@ -101,4 +70,4 @@ export const AnalyticsProvider = ({ children }) => {
   );
 };
 
-export default AnalyticsProvider; 
+export default AnalyticsProvider;

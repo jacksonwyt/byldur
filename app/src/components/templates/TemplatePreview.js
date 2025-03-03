@@ -2,8 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FaTag, FaCalendarAlt, FaDesktop, FaTabletAlt, FaMobileAlt } from 'react-icons/fa';
 import PropTypes from 'prop-types';
-import Button from '../common/Button';
-import Spinner from '../common/Spinner';
+import { Button, Spinner } from '../ui';
 
 const PreviewContainer = styled.div`
   background-color: var(--bg-color);

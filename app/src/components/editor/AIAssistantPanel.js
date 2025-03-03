@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaRobot, FaMagic, FaCode, FaImage, FaFont, FaSpinner, FaCreditCard, 
   FaCopy, FaCheck, FaPlay, FaHistory, FaLightbulb, FaTimes, FaSave } from 'react-icons/fa';
-import Button from '../common/Button';
+import { Button } from '../ui';
 import { useAI } from '../../hooks/useAI';
-import { useAuth } from '../../hooks/useAuth';
+import useAuthApi from '../../hooks/useAuthApi';
 import { useEditor } from '../../hooks/useEditor';
 import { useNavigate } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -241,7 +241,7 @@ const AIAssistantPanel = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
   const { generating, credits, generateComponent, generateWebsite, getSuggestions, usageHistory } = useAI();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthApi();
   const { editor } = useEditor();
   const navigate = useNavigate();
   const responseRef = useRef(null);

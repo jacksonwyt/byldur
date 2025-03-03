@@ -1,23 +1,28 @@
-import React, { createContext, useState, useEffect } from 'react';
-import * as authService from '../services/authService';
+import { useState, useCallback, useEffect } from 'react';
+import useApi from './useApi';
 import * as analyticsService from '../services/analyticsService';
 
-// Create the Auth Context
-export const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
+/**
+ * Hook for authentication API operations
+ * Manages user authentication state and provides auth-related operations
+ */
+const useAuthApi = () => {
+  const authApi = useApi('/api/auth');
+  
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('byldur-token'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!token);
 
   // Check if the user is authenticated on initial load
   useEffect(() => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const userData = await authService.getCurrentUser();
+          const userData = await getCurrentUser();
           setUser(userData);
+          setIsAuthenticated(true);
           
           // Track user authentication
           analyticsService.setUserProperties({
@@ -29,28 +34,41 @@ export const AuthProvider = ({ children }) => {
           console.error('Authentication error:', err);
           localStorage.removeItem('byldur-token');
           setToken(null);
+          setUser(null);
+          setIsAuthenticated(false);
           setError('Authentication session expired. Please log in again.');
           
           // Track authentication error
           analyticsService.trackError('auth_session_expired', err.message || 'Session expired');
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();
   }, [token]);
 
+  // Get current user data
+  const getCurrentUser = useCallback(async () => {
+    const userData = await authApi.get('/me');
+    return userData;
+  }, [authApi]);
+
   // Login user
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await authService.login(email, password);
+      
+      const response = await authApi.post('/login', { email, password }, false);
       
       localStorage.setItem('byldur-token', response.token);
       setToken(response.token);
       setUser(response.user);
+      setIsAuthenticated(true);
       
       // Track successful login
       analyticsService.trackAuthEvent('sign_in', 'email');
@@ -66,18 +84,20 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
   // Register user
-  const register = async (userData) => {
+  const register = useCallback(async (userData) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await authService.register(userData);
+      
+      const response = await authApi.post('/register', userData, false);
       
       localStorage.setItem('byldur-token', response.token);
       setToken(response.token);
       setUser(response.user);
+      setIsAuthenticated(true);
       
       // Track successful registration
       analyticsService.trackAuthEvent('sign_up', 'email');
@@ -93,12 +113,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
   // Logout user
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      await authApi.post('/logout');
       
       // Track logout
       analyticsService.trackAuthEvent('sign_out');
@@ -111,15 +131,17 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('byldur-token');
       setToken(null);
       setUser(null);
+      setIsAuthenticated(false);
     }
-  };
+  }, [authApi]);
 
   // Update user profile
-  const updateProfile = async (userData) => {
+  const updateProfile = useCallback(async (userData) => {
     try {
       setLoading(true);
       setError(null);
-      const updatedUser = await authService.updateProfile(userData);
+      
+      const updatedUser = await authApi.put('/profile', userData);
       setUser(updatedUser);
       
       // Track profile update
@@ -136,14 +158,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
   // Reset password request
-  const requestPasswordReset = async (email) => {
+  const requestPasswordReset = useCallback(async (email) => {
     try {
       setLoading(true);
       setError(null);
-      await authService.requestPasswordReset(email);
+      
+      await authApi.post('/forgot-password', { email }, false);
       
       // Track password reset request
       analyticsService.trackAuthEvent('password_reset_request');
@@ -157,14 +180,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
   // Reset password with token
-  const resetPassword = async (token, newPassword) => {
+  const resetPassword = useCallback(async (resetToken, newPassword) => {
     try {
       setLoading(true);
       setError(null);
-      await authService.resetPassword(token, newPassword);
+      
+      await authApi.post('/reset-password', { token: resetToken, password: newPassword }, false);
       
       // Track password reset
       analyticsService.trackAuthEvent('password_reset_complete');
@@ -178,14 +202,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
   // Change password
-  const changePassword = async (currentPassword, newPassword) => {
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
     try {
       setLoading(true);
       setError(null);
-      await authService.changePassword(currentPassword, newPassword);
+      
+      await authApi.post('/change-password', { currentPassword, newPassword });
       
       // Track password change
       analyticsService.trackAuthEvent('password_changed');
@@ -199,14 +224,17 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authApi]);
 
-  const value = {
+  return {
+    // State
     user,
     token,
     loading,
     error,
-    isAuthenticated: !!token,
+    isAuthenticated,
+    
+    // Methods
     login,
     register,
     logout,
@@ -214,8 +242,14 @@ export const AuthProvider = ({ children }) => {
     requestPasswordReset,
     resetPassword,
     changePassword,
-    setError
+    getCurrentUser,
+    
+    // Utility
+    clearError: () => {
+      setError(null);
+      authApi.clearError();
+    }
   };
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}; 
+export default useAuthApi;

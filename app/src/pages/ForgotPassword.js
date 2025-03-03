@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaUser, FaEnvelope, FaArrowLeft } from 'react-icons/fa';
-import Button from '../components/common/Button';
-import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui';
+import useAuthApi from '../hooks/useAuthApi';
 
 const ForgotPasswordContainer = styled.div`
   display: flex;
@@ -113,7 +113,7 @@ const ForgotPassword = () => {
   const [validationError, setValidationError] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   
-  const { requestPasswordReset, error, loading, isAuthenticated, setError } = useAuth();
+  const { requestPasswordReset, error, loading, isAuthenticated, clearError } = useAuthApi();
   const navigate = useNavigate();
   
   // If already authenticated, redirect to dashboard
@@ -123,8 +123,8 @@ const ForgotPassword = () => {
     }
     
     // Clear any previous auth errors when component mounts
-    return () => setError(null);
-  }, [isAuthenticated, navigate, setError]);
+    return () => clearError();
+  }, [isAuthenticated, navigate, clearError]);
   
   const handleChange = (e) => {
     setEmail(e.target.value);
@@ -162,11 +162,11 @@ const ForgotPassword = () => {
           <h1>Reset Password</h1>
           <p>Enter your email to receive a password reset link</p>
         </ForgotPasswordHeader>
-        
+       
         {isSubmitted ? (
           <>
             <SuccessMessage>
-              We've sent a password reset link to <strong>{email}</strong>. 
+              We&apos;ve sent a password reset link to <strong>{email}</strong>. 
               Please check your inbox and follow the instructions to reset your password.
             </SuccessMessage>
             <Button as={Link} to="/login" fullWidth>

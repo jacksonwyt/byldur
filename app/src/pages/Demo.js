@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaPuzzlePiece, FaColumns, FaTextHeight, FaImage, FaListUl, FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify, FaSave, FaTrash, FaTimes } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 const PageContainer = styled.div`
   height: calc(100vh - 60px);
@@ -249,7 +249,7 @@ const BlockButton = styled.div`
 `;
 
 const Demo = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthApi();
   const [showNotice, setShowNotice] = useState(true);
   const [components, setComponents] = useState([]);
   

@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSave, FaCheckCircle } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
-import Button from '../components/common/Button';
-import Spinner from '../components/common/Spinner';
+import useAuthApi from '../hooks/useAuthApi';
+import { Button, Spinner } from '../components/ui';
 
 const ProfileContainer = styled.div`
   max-width: 1000px;
@@ -160,7 +159,7 @@ const PasswordRequirement = styled.div`
 `;
 
 const Profile = () => {
-  const { user, updateProfile, changePassword, loading, error, setError } = useAuth();
+  const { user, updateProfile, changePassword, loading, error, clearError } = useAuthApi();
   const navigate = useNavigate();
   
   const [profileData, setProfileData] = useState({
@@ -198,8 +197,8 @@ const Profile = () => {
   
   // Clear error message when component unmounts
   useEffect(() => {
-    return () => setError(null);
-  }, [setError]);
+    return () => clearError();
+  }, [clearError]);
   
   // Password requirements
   const requirements = {

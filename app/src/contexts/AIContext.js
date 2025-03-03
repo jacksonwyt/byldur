@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import aiService from '../services/aiService';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 export const AIContext = createContext();
 
@@ -20,7 +20,7 @@ export const AIProvider = ({ children }) => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [lastOperation, setLastOperation] = useState(null);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthApi();
 
   // Fetch AI credits when user is authenticated
   useEffect(() => {
@@ -135,23 +135,17 @@ export const AIProvider = ({ children }) => {
     setLastGenerateParams({ prompt, options });
     setGenerating(true);
     
-    try {
-      const result = await handleOperation(
-        async () => {
-          const data = await aiService.generateWebsite(prompt, options);
-          // Update credits after generation
-          await fetchAICredits();
-          await fetchUsageHistory();
-          return data;
-        },
-        'generate website',
-        AI_STATUS.GENERATING
-      );
-      
-      return result;
-    } catch (err) {
-      throw err;
-    }
+    return await handleOperation(
+      async () => {
+        const data = await aiService.generateWebsite(prompt, options);
+        // Update credits after generation
+        await fetchAICredits();
+        await fetchUsageHistory();
+        return data;
+      },
+      'generate website',
+      AI_STATUS.GENERATING
+    );
   }, [handleOperation, fetchAICredits, fetchUsageHistory]);
 
   // Generate component or section
@@ -159,23 +153,17 @@ export const AIProvider = ({ children }) => {
     setLastGenerateParams({ prompt, type, options });
     setGenerating(true);
     
-    try {
-      const result = await handleOperation(
-        async () => {
-          const data = await aiService.generateComponent(prompt, type, options);
-          // Update credits after generation
-          await fetchAICredits();
-          await fetchUsageHistory();
-          return data;
-        },
-        'generate component',
-        AI_STATUS.GENERATING
-      );
-      
-      return result;
-    } catch (err) {
-      throw err;
-    }
+    return await handleOperation(
+      async () => {
+        const data = await aiService.generateComponent(prompt, type, options);
+        // Update credits after generation
+        await fetchAICredits();
+        await fetchUsageHistory();
+        return data;
+      },
+      'generate component',
+      AI_STATUS.GENERATING
+    );
   }, [handleOperation, fetchAICredits, fetchUsageHistory]);
 
   // Get AI suggestions for improvements
@@ -183,41 +171,29 @@ export const AIProvider = ({ children }) => {
     setLastGenerateParams({ html, css, options });
     setGenerating(true);
     
-    try {
-      const result = await handleOperation(
-        async () => {
-          const data = await aiService.getSuggestions(html, css, options);
-          // Update credits after generation
-          await fetchAICredits();
-          await fetchUsageHistory();
-          return data;
-        },
-        'get suggestions',
-        AI_STATUS.GENERATING
-      );
-      
-      return result;
-    } catch (err) {
-      throw err;
-    }
+    return await handleOperation(
+      async () => {
+        const data = await aiService.getSuggestions(html, css, options);
+        // Update credits after generation
+        await fetchAICredits();
+        await fetchUsageHistory();
+        return data;
+      },
+      'get suggestions',
+      AI_STATUS.GENERATING
+    );
   }, [handleOperation, fetchAICredits, fetchUsageHistory]);
 
   // Purchase AI credits
   const purchaseCredits = useCallback(async (amount) => {
-    try {
-      const result = await handleOperation(
-        async () => {
-          const data = await aiService.purchaseCredits(amount);
-          await fetchAICredits();
-          return data;
-        },
-        'purchase AI credits'
-      );
-      
-      return result;
-    } catch (err) {
-      throw err;
-    }
+    return await handleOperation(
+      async () => {
+        const data = await aiService.purchaseCredits(amount);
+        await fetchAICredits();
+        return data;
+      },
+      'purchase AI credits'
+    );
   }, [handleOperation, fetchAICredits]);
 
   const value = {

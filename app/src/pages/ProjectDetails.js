@@ -13,11 +13,10 @@ import {
   FaExclamationTriangle,
   FaCheckCircle
 } from 'react-icons/fa';
-import { useProjects } from '../hooks/useProjects';
-import { useAuth } from '../hooks/useAuth';
+import useProjectApi from '../hooks/useProjectApi';
+import useAuthApi from '../hooks/useAuthApi';
 import { useAnalytics } from '../hooks/useAnalytics';
-import Button from '../components/common/Button';
-import Spinner from '../components/common/Spinner';
+import { Button, Spinner, Badge } from '../components/ui';
 import { formatDate, getRelativeTimeString } from '../utils/dateUtils';
 import ProjectActions from '../components/projects/ProjectActions';
 
@@ -277,39 +276,45 @@ const getInitials = (name) => {
 const ProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { getCurrentUser } = useAuthApi();
+  const [user, setUser] = useState(null);
   const analytics = useAnalytics();
   const { 
-    getProject, 
+    fetchProject, 
     deleteProject, 
     publishProject, 
     unpublishProject, 
     duplicateProject,
     loading, 
     error 
-  } = useProjects();
+  } = useProjectApi();
   
   const [project, setProject] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   useEffect(() => {
-    const fetchProject = async () => {
+    const loadData = async () => {
       try {
-        const projectData = await getProject(projectId);
+        // Load project data
+        const projectData = await fetchProject(projectId);
         setProject(projectData);
+        
+        // Load user data
+        const userData = await getCurrentUser();
+        setUser(userData);
         
         // Track project view
         analytics.trackFeatureUsage('project_details', 'viewed', projectId);
       } catch (err) {
-        console.error('Error fetching project:', err);
-        analytics.trackError('project_fetch', `Failed to fetch project: ${err.message}`);
+        console.error('Error loading data:', err);
+        analytics.trackError('project_fetch', `Failed to load data: ${err.message}`);
       }
     };
     
     if (projectId) {
-      fetchProject();
+      loadData();
     }
-  }, [projectId, getProject, analytics]);
+  }, [projectId, fetchProject, getCurrentUser, analytics]);
   
   // Handle delete project
   const handleDeleteProject = async () => {
@@ -385,13 +390,13 @@ const ProjectDetails = () => {
       <ProjectDetailsContainer>
         <div style={{ textAlign: 'center', padding: '3rem' }}>
           <h2>Project Not Found</h2>
-          <p>The project you're looking for doesn't exist or you don't have access to it.</p>
+          <p>The project you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
           <Link to="/dashboard">Back to Dashboard</Link>
         </div>
       </ProjectDetailsContainer>
     );
   }
-  
+ 
   const placeholderColor = generateColor(project.name);
   const initials = getInitials(project.name);
   
@@ -409,9 +414,9 @@ const ProjectDetails = () => {
         <div>
           <ProjectTitle>{project.name}</ProjectTitle>
           {project.published && (
-            <StatusBadge status="published">
+            <Badge variant="success">
               <FaCheckCircle /> Published
-            </StatusBadge>
+            </Badge>
           )}
         </div>
         

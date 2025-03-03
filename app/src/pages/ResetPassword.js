@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaLock, FaEye, FaEyeSlash, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
-import Button from '../components/common/Button';
-import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui';
+import useAuthApi from '../hooks/useAuthApi';
 
 const ResetPasswordContainer = styled.div`
   display: flex;
@@ -155,7 +155,7 @@ const ResetPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isValidToken, setIsValidToken] = useState(true);
   
-  const { resetPassword, error, loading, setError } = useAuth();
+  const { resetPassword, error, loading, clearError } = useAuthApi();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -165,13 +165,13 @@ const ResetPassword = () => {
   
   useEffect(() => {
     // Clear any previous auth errors when component mounts
-    setError(null);
+    clearError();
     
     // Check if token exists in URL
     if (!token) {
       setIsValidToken(false);
     }
-  }, [token, setError]);
+  }, [token, clearError]);
   
   // Password requirements
   const requirements = {

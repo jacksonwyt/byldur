@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
-import Button from '../components/common/Button';
-import Spinner from '../components/common/Spinner';
+import useAuthApi from '../hooks/useAuthApi';
+import { Button, Spinner } from '../components/ui';
 
 const RegisterContainer = styled.div`
   min-height: calc(100vh - 60px);
@@ -160,7 +159,7 @@ const ActionLinks = styled.div`
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register, isAuthenticated, loading, error } = useAuth();
+  const { register, isAuthenticated, loading, error } = useAuthApi();
   
   const [formData, setFormData] = useState({
     name: '',

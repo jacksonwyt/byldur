@@ -6,13 +6,12 @@ import {
   FaDownload, FaUpload, FaHome, FaBars, FaTimes,
   FaChevronLeft, FaCog, FaCheckCircle 
 } from 'react-icons/fa';
-import { useAuth } from '../../hooks/useAuth';
-import { useProjects } from '../../hooks/useProjects';
+import useAuthApi from '../../hooks/useAuthApi';
+import useProjectApi from '../../hooks/useProjectApi';
 import { useTheme } from '../../hooks/useTheme';
 import { useEditor } from '../../hooks/useEditor';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import Button from '../common/Button';
-import { saveProjectContent } from '../../services/projectService';
+import { Button } from '../ui';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -158,8 +157,8 @@ const Notification = styled.div`
 const EditorHeader = ({ toggleAIPanel, aiPanelOpen }) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const { currentProject, publishProject } = useProjects();
+  const { isAuthenticated } = useAuthApi();
+  const { currentProject, publishProject, saveProjectContent } = useProjectApi();
   const { darkMode } = useTheme();
   const { 
     editor,

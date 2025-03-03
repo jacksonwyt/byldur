@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
-import Button from '../components/common/Button';
-import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui';
+import useAuthApi from '../hooks/useAuthApi';
 
 const LoginContainer = styled.div`
   display: flex;
@@ -106,7 +106,7 @@ const Login = () => {
   });
   const [validationErrors, setValidationErrors] = useState({});
   
-  const { login, error, loading, isAuthenticated } = useAuth();
+  const { login, error, loading, isAuthenticated } = useAuthApi();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -219,7 +219,7 @@ const Login = () => {
           
           <ActionLinks>
             <Link to="/forgot-password">Forgot password?</Link>
-            <Link to="/register">Don't have an account? Sign up</Link>
+            <Link to="/register">Don&apos;t have an account? Sign up</Link>
           </ActionLinks>
         </LoginForm>
       </LoginCard>

@@ -1,13 +1,13 @@
 import React, { createContext, useState, useCallback, useEffect, useRef } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useProject } from '../hooks/useProject';
+import useAuthApi from '../hooks/useAuthApi';
+import useProjectApi from '../hooks/useProjectApi';
 import io from 'socket.io-client';
 
 export const CollaborationContext = createContext();
 
 export const CollaborationProvider = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
-  const { currentProject } = useProject();
+  const { user, isAuthenticated } = useAuthApi();
+  const { currentProject } = useProjectApi();
   const [activeUsers, setActiveUsers] = useState([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);

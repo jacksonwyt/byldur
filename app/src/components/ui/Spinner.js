@@ -42,11 +42,11 @@ const Spinner = ({
   fullScreen = false 
 }) => {
   return (
-    <SpinnerContainer fullScreen={fullScreen}>
+    <SpinnerContainer fullScreen={fullScreen} data-testid="spinner-container">
       <SpinnerElement size={size} />
       {message && <Message>{message}</Message>}
     </SpinnerContainer>
   );
 };
 
-export default Spinner; 
+export default Spinner;

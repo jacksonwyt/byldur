@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useAuth } from '../../hooks/useAuth';
+import useAuthApi from '../../hooks/useAuthApi';
 import { 
   FaTachometerAlt, 
   FaFolder, 
@@ -176,8 +176,9 @@ const ToggleButton = styled.button`
 `;
 
 const DashboardSidebar = ({ collapsed }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthApi();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Get the current active path
   const currentPath = location.pathname;
@@ -246,8 +247,8 @@ const DashboardSidebar = ({ collapsed }) => {
   
   // Handle new project button click
   const handleNewProject = () => {
-    // Navigate to new project page
-    window.location.href = '/projects/new';
+    // Navigate to new project page using React Router
+    navigate('/projects/new');
   };
   
   return (

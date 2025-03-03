@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useStripe } from '@stripe/react-stripe-js';
 import styled from 'styled-components';
-import Button from '../common/Button';
-import Spinner from '../common/Spinner';
-import { useStripe as useStripeContext } from '../../hooks/useStripe';
+import { Button, Spinner, AlertMessage } from '../ui';
+import stripeService from '../../services/stripeService';
 
 const CheckoutContainer = styled.div`
   width: 100%;
@@ -67,56 +65,50 @@ const ButtonContainer = styled.div`
   margin-top: 2rem;
 `;
 
-const ErrorMessage = styled.div`
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  background-color: var(--error-bg-color);
-  color: var(--error-color);
-  border-radius: 0.5rem;
-  border-left: 4px solid var(--error-color);
-`;
-
-const SuccessMessage = styled.div`
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  background-color: var(--success-bg-color);
-  color: var(--success-color);
-  border-radius: 0.5rem;
-  border-left: 4px solid var(--success-color);
-`;
-
-const StripeCheckout = ({ planId, onCancel }) => {
-  const stripe = useStripe();
-  const { plans, loading, error, createCheckoutSession } = useStripeContext();
+const CheckoutComponent = ({ planId, onCancel, simple = false }) => {
+  const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [checkoutError, setCheckoutError] = useState(null);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Load plans on mount
   useEffect(() => {
-    // Find the selected plan from available plans
-    if (plans && plans.length > 0 && planId) {
-      const plan = plans.find(p => p.id === planId);
-      setSelectedPlan(plan);
-    }
-  }, [plans, planId]);
+    const loadPlans = async () => {
+      try {
+        setLoading(true);
+        const plansData = await stripeService.getPlans();
+        setPlans(plansData);
+        
+        // Find the selected plan
+        if (planId) {
+          const plan = plansData.find(p => p.id === planId);
+          setSelectedPlan(plan);
+        }
+      } catch (err) {
+        setError('Failed to load plan information. Please try again later.');
+        console.error('Error loading plans:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPlans();
+  }, [planId]);
 
   const handleCheckout = async () => {
-    if (!stripe) return;
-    
-    setIsCheckingOut(true);
-    setCheckoutError(null);
-    
     try {
-      await createCheckoutSession(planId);
-      // If this succeeds, the user will be redirected to Stripe
+      setLoading(true);
+      setError(null);
+      await stripeService.createCheckoutSession(planId);
+      // If successful, user will be redirected to Stripe
     } catch (err) {
-      setCheckoutError(err.message || 'Failed to create checkout session.');
-      setIsCheckingOut(false);
+      setError('Failed to initiate checkout. Please try again later.');
+      console.error('Checkout error:', err);
+      setLoading(false);
     }
   };
 
-  if (loading.plans) {
+  if (loading && !selectedPlan) {
     return (
       <CheckoutContainer>
         <Spinner size="medium" message="Loading plan details..." />
@@ -127,9 +119,9 @@ const StripeCheckout = ({ planId, onCancel }) => {
   if (!selectedPlan) {
     return (
       <CheckoutContainer>
-        <ErrorMessage>
+        <AlertMessage variant="error">
           Plan not found. Please select a valid subscription plan.
-        </ErrorMessage>
+        </AlertMessage>
         <ButtonContainer>
           <Button variant="secondary" onClick={onCancel}>Go Back</Button>
         </ButtonContainer>
@@ -137,23 +129,43 @@ const StripeCheckout = ({ planId, onCancel }) => {
     );
   }
 
+  // Simple checkout version (minimal UI)
+  if (simple) {
+    return (
+      <CheckoutContainer>
+        <Title>Complete Your Subscription</Title>
+        <p style={{ marginBottom: '1.5rem' }}>
+          You&apos;ll be redirected to Stripe&apos;s secure payment page to complete your subscription.
+        </p>
+        
+        {error && <AlertMessage variant="error">{error}</AlertMessage>}
+        
+        <ButtonContainer>
+          <Button 
+            variant="secondary" 
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCheckout}
+            disabled={loading}
+            loading={loading}
+          >
+            Proceed to Payment
+          </Button>
+        </ButtonContainer>
+      </CheckoutContainer>
+    );
+  }
+
+  // Full checkout version (with plan details)
   return (
     <CheckoutContainer>
       <Title>Subscription Checkout</Title>
       
-      {checkoutError && (
-        <ErrorMessage>{checkoutError}</ErrorMessage>
-      )}
-      
-      {error.checkout && (
-        <ErrorMessage>{error.checkout}</ErrorMessage>
-      )}
-      
-      {checkoutSuccess && (
-        <SuccessMessage>
-          Payment successful! Your subscription is now active.
-        </SuccessMessage>
-      )}
+      {error && <AlertMessage variant="error">{error}</AlertMessage>}
       
       <PlanDetails>
         <PlanName>{selectedPlan.name}</PlanName>
@@ -173,14 +185,14 @@ const StripeCheckout = ({ planId, onCancel }) => {
         <Button 
           variant="secondary" 
           onClick={onCancel}
-          disabled={isCheckingOut || loading.checkout}
+          disabled={loading}
         >
           Cancel
         </Button>
         <Button 
           onClick={handleCheckout}
-          disabled={!stripe || isCheckingOut || loading.checkout}
-          loading={isCheckingOut || loading.checkout}
+          disabled={loading}
+          loading={loading}
         >
           Proceed to Payment
         </Button>
@@ -189,4 +201,4 @@ const StripeCheckout = ({ planId, onCancel }) => {
   );
 };
 
-export default StripeCheckout; 
+export default CheckoutComponent;

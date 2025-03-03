@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
 import TemplateCard from './TemplateCard';
 import PropTypes from 'prop-types';
-import Spinner from '../common/Spinner';
+import { Spinner } from '../ui';
 
 const SelectorContainer = styled.div`
   width: 100%;

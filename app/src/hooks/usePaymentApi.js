@@ -1,16 +1,20 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import subscriptionService from '../services/subscriptionService';
-import { useAuth } from '../hooks/useAuth';
+import useApi from './useApi';
+import useAuthApi from './useAuthApi';
 
-// Create the context
-export const StripeContext = createContext();
-
-// Initialize Stripe outside of component to avoid recreating it on each render
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-
-export const StripeProvider = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+/**
+ * Hook for payment and subscription API operations
+ * Manages subscription state and provides payment-related operations
+ */
+const usePaymentApi = () => {
+  const subscriptionApi = useApi('/api/subscriptions');
+  const { isAuthenticated } = useAuthApi();
+  
+  // Initialize Stripe (outside of component lifecycle)
+  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+  
+  // State
   const [subscription, setSubscription] = useState(null);
   const [plans, setPlans] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
@@ -46,64 +50,70 @@ export const StripeProvider = ({ children }) => {
   }, []);
 
   // Fetch current subscription data
-  const fetchSubscription = async () => {
-    if (!isAuthenticated) return;
+  const fetchSubscription = useCallback(async () => {
+    if (!isAuthenticated) return null;
     
     try {
       setLoading(prev => ({ ...prev, subscription: true }));
       setError(prev => ({ ...prev, subscription: null }));
       
-      const data = await subscriptionService.getSubscription();
+      const data = await subscriptionApi.get('');
       setSubscription(data);
+      return data;
     } catch (err) {
       setError(prev => ({ ...prev, subscription: err.message || 'Failed to fetch subscription' }));
       console.error('Error fetching subscription:', err);
+      return null;
     } finally {
       setLoading(prev => ({ ...prev, subscription: false }));
     }
-  };
+  }, [subscriptionApi, isAuthenticated]);
 
   // Fetch available subscription plans
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, plans: true }));
       setError(prev => ({ ...prev, plans: null }));
       
-      const data = await subscriptionService.getPlans();
+      const data = await subscriptionApi.get('/plans', null, false);
       setPlans(data);
+      return data;
     } catch (err) {
       setError(prev => ({ ...prev, plans: err.message || 'Failed to fetch subscription plans' }));
       console.error('Error fetching plans:', err);
+      return [];
     } finally {
       setLoading(prev => ({ ...prev, plans: false }));
     }
-  };
+  }, [subscriptionApi]);
 
   // Fetch payment history
-  const fetchPaymentHistory = async () => {
-    if (!isAuthenticated) return;
+  const fetchPaymentHistory = useCallback(async () => {
+    if (!isAuthenticated) return [];
     
     try {
       setLoading(prev => ({ ...prev, paymentHistory: true }));
       setError(prev => ({ ...prev, paymentHistory: null }));
       
-      const data = await subscriptionService.getPaymentHistory();
+      const data = await subscriptionApi.get('/payment-history');
       setPaymentHistory(data);
+      return data;
     } catch (err) {
       setError(prev => ({ ...prev, paymentHistory: err.message || 'Failed to fetch payment history' }));
       console.error('Error fetching payment history:', err);
+      return [];
     } finally {
       setLoading(prev => ({ ...prev, paymentHistory: false }));
     }
-  };
+  }, [subscriptionApi, isAuthenticated]);
 
   // Create checkout session and redirect to Stripe checkout
-  const createCheckoutSession = async (planId) => {
+  const createCheckoutSession = useCallback(async (planId) => {
     try {
       setLoading(prev => ({ ...prev, checkout: true }));
       setError(prev => ({ ...prev, checkout: null }));
       
-      const { sessionId } = await subscriptionService.createCheckoutSession(planId);
+      const { sessionId } = await subscriptionApi.post('/create-checkout', { planId });
       
       // Get Stripe instance
       const stripe = await stripePromise;
@@ -114,6 +124,8 @@ export const StripeProvider = ({ children }) => {
       if (error) {
         throw new Error(error.message);
       }
+      
+      return true;
     } catch (err) {
       setError(prev => ({ ...prev, checkout: err.message || 'Failed to create checkout session' }));
       console.error('Error creating checkout session:', err);
@@ -121,15 +133,15 @@ export const StripeProvider = ({ children }) => {
     } finally {
       setLoading(prev => ({ ...prev, checkout: false }));
     }
-  };
+  }, [subscriptionApi, stripePromise]);
 
   // Cancel subscription
-  const cancelSubscription = async () => {
+  const cancelSubscription = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, cancel: true }));
       setError(prev => ({ ...prev, cancel: null }));
       
-      await subscriptionService.cancelSubscription();
+      await subscriptionApi.post('/cancel');
       
       // Refresh subscription data
       await fetchSubscription();
@@ -141,15 +153,15 @@ export const StripeProvider = ({ children }) => {
     } finally {
       setLoading(prev => ({ ...prev, cancel: false }));
     }
-  };
+  }, [subscriptionApi, fetchSubscription]);
 
   // Reactivate subscription
-  const reactivateSubscription = async () => {
+  const reactivateSubscription = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, reactivate: true }));
       setError(prev => ({ ...prev, reactivate: null }));
       
-      await subscriptionService.reactivateSubscription();
+      await subscriptionApi.post('/reactivate');
       
       // Refresh subscription data
       await fetchSubscription();
@@ -161,15 +173,15 @@ export const StripeProvider = ({ children }) => {
     } finally {
       setLoading(prev => ({ ...prev, reactivate: false }));
     }
-  };
+  }, [subscriptionApi, fetchSubscription]);
 
   // Update payment method
-  const updatePaymentMethod = async () => {
+  const updatePaymentMethod = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, updatePayment: true }));
       setError(prev => ({ ...prev, updatePayment: null }));
       
-      const { sessionId } = await subscriptionService.updatePaymentMethod();
+      const { sessionId } = await subscriptionApi.post('/update-payment');
       
       // Get Stripe instance
       const stripe = await stripePromise;
@@ -180,6 +192,8 @@ export const StripeProvider = ({ children }) => {
       if (error) {
         throw new Error(error.message);
       }
+      
+      return true;
     } catch (err) {
       setError(prev => ({ ...prev, updatePayment: err.message || 'Failed to update payment method' }));
       console.error('Error updating payment method:', err);
@@ -187,30 +201,34 @@ export const StripeProvider = ({ children }) => {
     } finally {
       setLoading(prev => ({ ...prev, updatePayment: false }));
     }
-  };
+  }, [subscriptionApi, stripePromise]);
 
   // Check if user has an active subscription
-  const hasActiveSubscription = () => {
+  const hasActiveSubscription = useCallback(() => {
     return subscription && 
            subscription.status === 'active' && 
            (!subscription.canceledAt || new Date(subscription.endDate) > new Date());
-  };
+  }, [subscription]);
 
   // Get subscription tier
-  const getSubscriptionTier = () => {
+  const getSubscriptionTier = useCallback(() => {
     if (!subscription) return 'free';
     if (subscription.status !== 'active') return 'free';
-    return subscription.plan.tier;
-  };
+    return subscription.plan?.tier || 'free';
+  }, [subscription]);
 
-  // Value to be provided by the context
-  const value = {
+  return {
+    // External APIs
     stripe: stripePromise,
+    
+    // State
     subscription,
     plans,
     paymentHistory,
     loading,
     error,
+    
+    // Methods
     fetchSubscription,
     fetchPlans,
     fetchPaymentHistory,
@@ -218,13 +236,25 @@ export const StripeProvider = ({ children }) => {
     cancelSubscription,
     reactivateSubscription,
     updatePaymentMethod,
+    
+    // Helper methods
     hasActiveSubscription,
-    getSubscriptionTier
+    getSubscriptionTier,
+    
+    // Utility
+    clearError: () => {
+      setError({
+        subscription: null,
+        plans: null,
+        paymentHistory: null,
+        checkout: null,
+        cancel: null,
+        reactivate: null,
+        updatePayment: null
+      });
+      subscriptionApi.clearError();
+    }
   };
+};
 
-  return (
-    <StripeContext.Provider value={value}>
-      {children}
-    </StripeContext.Provider>
-  );
-}; 
+export default usePaymentApi;

@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaPlus, FaTimes, FaCheck, FaSearch, FaTag, FaClipboard } from 'react-icons/fa';
-import { useProjects } from '../hooks/useProjects';
-import { useAuth } from '../hooks/useAuth';
-import Button from '../components/common/Button';
-import Spinner from '../components/common/Spinner';
+import useProjectApi from '../hooks/useProjectApi';
+import useAuthApi from '../hooks/useAuthApi';
+import { Button, Spinner } from '../components/ui';
 import TemplateSelector from '../components/templates/TemplateSelector';
 import TemplatePreview from '../components/templates/TemplatePreview';
 
@@ -175,8 +174,8 @@ const ActionButtons = styled.div`
 
 const NewProject = () => {
   const navigate = useNavigate();
-  const { addProject, fetchTemplates, templates, loading, error } = useProjects();
-  const { user } = useAuth();
+  const { createProject, fetchTemplates, templates, loading, error } = useProjectApi();
+  const { user } = useAuthApi();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [projectOption, setProjectOption] = useState('blank'); // 'blank' or 'template'
@@ -288,7 +287,7 @@ const NewProject = () => {
         templateId: selectedTemplate?.id || null
       };
       
-      const newProject = await addProject(newProjectData);
+      const newProject = await createProject(newProjectData);
       
       if (newProject && newProject.id) {
         // Redirect to the editor with the new project

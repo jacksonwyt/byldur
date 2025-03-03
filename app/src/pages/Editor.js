@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useProjects } from '../hooks/useProjects';
+import useProjectApi from '../hooks/useProjectApi';
 import EditorCanvas from '../components/editor/EditorCanvas';
 import EditorHeader from '../components/navigation/EditorHeader';
 import EditorTools from '../components/editor/EditorTools';
 import AIAssistantPanel from '../components/editor/AIAssistantPanel';
-import Spinner from '../components/common/Spinner';
+import { Spinner } from '../components/ui';
 
 const EditorContainer = styled.div`
   display: flex;
@@ -63,7 +63,7 @@ const ErrorMessage = styled.div`
 const Editor = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { fetchProject, currentProject, loading, error } = useProjects();
+  const { fetchProject, currentProject, loading, error } = useProjectApi();
   const [editorReady, setEditorReady] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const canvasRef = useRef(null);
@@ -126,7 +126,7 @@ const Editor = () => {
       <LoadingContainer>
         <ErrorMessage>
           <h3>Project Not Found</h3>
-          <p>The project you're trying to access doesn't exist or you don't have permission to view it.</p>
+          <p>The project you&apos;re trying to access doesn&apos;t exist or you don&apos;t have permission to view it.</p>
           <button onClick={() => navigate('/dashboard')}>
             Return to Dashboard
           </button>
@@ -134,7 +134,7 @@ const Editor = () => {
       </LoadingContainer>
     );
   }
-  
+ 
   return (
     <EditorContainer>
       <EditorHeader 

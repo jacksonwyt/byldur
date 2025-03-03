@@ -58,13 +58,13 @@ const NotFound = () => {
   // If the user came from a specific page, we can get the referrer
   const referrer = document.referrer;
   const hasReferrer = referrer && referrer.includes(window.location.origin);
-  
+ 
   return (
     <NotFoundContainer>
       <ErrorCode>404</ErrorCode>
       <Title>Page Not Found</Title>
       <Description>
-        The page you're looking for doesn't exist or has been moved. 
+        The page you&apos;re looking for doesn&apos;t exist or has been moved. 
         Please check the URL or navigate back to the home page.
       </Description>
       

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaPaintBrush, FaMobileAlt, FaCode, FaRocket, FaCloudUploadAlt, FaShareAlt, FaArrowRight } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -134,7 +134,7 @@ const CTAButton = styled(Link)`
 `;
 
 const Features = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthApi();
   const authLink = isAuthenticated ? '/dashboard' : '/register';
   
   return (
@@ -242,7 +242,7 @@ const Features = () => {
       <CTASection>
         <CTATitle>Start Building for Free Today</CTATitle>
         <CTAText>
-          Join thousands of users already creating beautiful websites with Byldur's free tools.
+          Join thousands of users already creating beautiful websites with Byldur&apos;s free tools.
           No credit card required, get started in seconds.
         </CTAText>
         <CTAButton to={authLink}>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaSearch, FaFilter, FaTimes, FaArrowRight, FaRegCopy } from 'react-icons/fa';
-import { useAuth } from '../hooks/useAuth';
+import useAuthApi from '../hooks/useAuthApi';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -323,7 +323,7 @@ const templateData = [
 const categories = ['All', 'Business', 'Portfolio', 'E-commerce', 'Blog', 'Marketing', 'Food'];
 
 const Templates = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthApi();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState(['All']);
   const [activePage, setActivePage] = useState(1);

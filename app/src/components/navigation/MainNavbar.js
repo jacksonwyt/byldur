@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaMoon, FaSun, FaBars, FaTimes } from 'react-icons/fa';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
-import Button from '../common/Button';
+import useAuthApi from '../../hooks/useAuthApi';
+import { Button } from '../ui';
 
 const NavbarContainer = styled.nav`
   background-color: var(--bg-color);
@@ -145,7 +145,7 @@ const MobileActions = styled.div`
 
 const MainNavbar = () => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthApi();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();

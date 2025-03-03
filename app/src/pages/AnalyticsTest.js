@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAnalytics } from '../hooks/useAnalytics';
-import Button from '../components/common/Button';
+import { Button } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`

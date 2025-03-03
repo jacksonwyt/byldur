@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaEye, FaTrash, FaCopy, FaCloudUploadAlt, FaToggleOn, FaToggleOff, FaHistory } from 'react-icons/fa';
 import PropTypes from 'prop-types';
-import Button from '../common/Button';
-import { useProject } from '../../hooks/useProject';
+import { Button } from '../ui';
+import useProjectApi from '../../hooks/useProjectApi';
 import { useAnalytics } from '../../hooks/useAnalytics';
 
 const ActionContainer = styled.div`
@@ -88,7 +88,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
     getDeploymentHistory,
     deployments,
     loading 
-  } = useProject();
+  } = useProjectApi();
   const analytics = useAnalytics();
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);

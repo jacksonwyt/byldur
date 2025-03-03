@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaPlus, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
-import { useProjects } from '../hooks/useProjects';
-import { useAuth } from '../hooks/useAuth';
-import Spinner from '../components/common/Spinner';
-import Button from '../components/common/Button';
+import useProjectApi from '../hooks/useProjectApi';
+import useAuthApi from '../hooks/useAuthApi';
+import { Button, Spinner } from '../components/ui';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -215,8 +214,8 @@ const EmptyState = styled.div`
 `;
 
 const Dashboard = () => {
-  const { projects, loading, error, fetchProjects } = useProjects();
-  const { user } = useAuth();
+  const { projects, loading, error, fetchProjects } = useProjectApi();
+  const { user } = useAuthApi();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc'
 

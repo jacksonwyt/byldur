@@ -3,14 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import grapesjs from 'grapesjs';
 import gjsPresetWebpage from 'grapesjs-preset-webpage';
-import { useProjects } from '../../hooks/useProjects';
-import { useAuth } from '../../hooks/useAuth';
+import useProjectApi from '../../hooks/useProjectApi';
+import useAuthApi from '../../hooks/useAuthApi';
 import { useAI } from '../../hooks/useAI';
 import { useEditor } from '../../hooks/useEditor';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import Spinner from '../common/Spinner';
-import Button from '../common/Button';
-import { saveProjectContent } from '../../services/projectService';
+import { Spinner } from '../ui';
 
 const EditorContainer = styled.div`
   height: 100%;
@@ -89,8 +87,8 @@ const EditorCanvas = forwardRef(({ onReady }, ref) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   
-  const { isAuthenticated, user } = useAuth();
-  const { currentProject, fetchProject, loading: projectLoading } = useProjects();
+  const { isAuthenticated, user } = useAuthApi();
+  const { currentProject, fetchProject, saveProjectContent, loading: projectLoading } = useProjectApi();
   const { credits, loading: aiLoading } = useAI();
   const { 
     editor, 
@@ -440,5 +438,8 @@ const EditorCanvas = forwardRef(({ onReady }, ref) => {
     </EditorContainer>
   );
 });
+
+// Add display name for the forwardRef component
+EditorCanvas.displayName = 'EditorCanvas';
 
 export default EditorCanvas; 

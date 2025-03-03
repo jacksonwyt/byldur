@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import useAuthApi from './hooks/useAuthApi';
 import { Suspense, lazy } from 'react';
 
 // Layout components
@@ -8,31 +8,43 @@ import MainLayout from './components/layouts/MainLayout';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import EditorLayout from './components/layouts/EditorLayout';
 
-// Regular components
-import Spinner from './components/common/Spinner';
+// Regular components - frequently used across the app
+import { Spinner } from './components/ui';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import NotFound from './components/common/NotFound';
-import AnalyticsDebugger from './components/analytics/AnalyticsDebugger';
-import AnalyticsTest from './pages/AnalyticsTest';
 
-// Lazy-loaded pages for better performance
-const Home = lazy(() => import('./pages/Home'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const NewProject = lazy(() => import('./pages/NewProject'));
-const Editor = lazy(() => import('./pages/Editor'));
-const Subscription = lazy(() => import('./pages/Subscription'));
-const ProjectDetails = lazy(() => import('./pages/ProjectDetails'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Features = lazy(() => import('./pages/Features'));
-const Templates = lazy(() => import('./pages/Templates'));
-const Demo = lazy(() => import('./pages/Demo'));
+// Development tools - only loaded in development
+const AnalyticsDebugger = lazy(() => import(/* webpackChunkName: "dev-tools" */ './components/analytics/AnalyticsDebugger'));
+const AnalyticsTest = lazy(() => import(/* webpackChunkName: "dev-tools" */ './pages/AnalyticsTest'));
+
+// Group 1: Public pages - marketing and authentication
+const Home = lazy(() => import(/* webpackChunkName: "home" */ './pages/Home'));
+const Features = lazy(() => import(/* webpackChunkName: "features" */ './pages/Features'));
+const Demo = lazy(() => import(/* webpackChunkName: "demo" */ './pages/Demo'));
+
+// Group 2: Authentication pages - bundled together
+const AuthPages = {
+  Login: lazy(() => import(/* webpackChunkName: "auth" */ './pages/Login')),
+  Register: lazy(() => import(/* webpackChunkName: "auth" */ './pages/Register')),
+  ForgotPassword: lazy(() => import(/* webpackChunkName: "auth" */ './pages/ForgotPassword')),
+  ResetPassword: lazy(() => import(/* webpackChunkName: "auth" */ './pages/ResetPassword')),
+};
+
+// Group 3: Dashboard and project management pages - bundled together
+const DashboardPages = {
+  Dashboard: lazy(() => import(/* webpackChunkName: "dashboard" */ './pages/Dashboard')),
+  ProjectDetails: lazy(() => import(/* webpackChunkName: "dashboard" */ './pages/ProjectDetails')),
+  NewProject: lazy(() => import(/* webpackChunkName: "dashboard" */ './pages/NewProject')),
+  Profile: lazy(() => import(/* webpackChunkName: "dashboard" */ './pages/Profile')),
+  Subscription: lazy(() => import(/* webpackChunkName: "subscription" */ './pages/Subscription')),
+  Templates: lazy(() => import(/* webpackChunkName: "templates" */ './pages/Templates')),
+};
+
+// Group 4: Editor pages - bundled separately since they're the heaviest
+const Editor = lazy(() => import(/* webpackChunkName: "editor" */ './pages/Editor'));
 
 function App() {
-  const { loading } = useAuth();
+  const { loading } = useAuthApi();
 
   if (loading) {
     return <Spinner fullScreen message="Loading application..." />;
@@ -40,75 +52,144 @@ function App() {
 
   return (
     <>
-      <Suspense fallback={<Spinner fullScreen message="Loading page..." />}>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
-            
-            {/* Public feature pages - allowing users to explore without login */}
-            <Route path="features" element={<Features />} />
-            <Route path="templates" element={<Templates />} />
-            <Route path="demo" element={<Demo />} />
-            
-            {/* Test routes only available in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <Route path="analytics-test" element={<AnalyticsTest />} />
-            )}
-          </Route>
-
-          {/* Protected dashboard routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="subscription" element={<Subscription />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="projects/:projectId" element={<ProjectDetails />} />
-          </Route>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<MainLayout />}>
+          {/* Marketing pages */}
+          <Route index element={
+            <Suspense fallback={<Spinner fullScreen message="Loading home page..." />}>
+              <Home />
+            </Suspense>
+          } />
+          <Route path="features" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading features..." />}>
+              <Features />
+            </Suspense>
+          } />
+          <Route path="demo" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading demo..." />}>
+              <Demo />
+            </Suspense>
+          } />
           
-          {/* Project creation route */}
-          <Route
-            path="/projects/new"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<NewProject />} />
-          </Route>
+          {/* Authentication pages - grouped together */}
+          <Route path="login" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading authentication..." />}>
+              <AuthPages.Login />
+            </Suspense>
+          } />
+          <Route path="register" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading authentication..." />}>
+              <AuthPages.Register />
+            </Suspense>
+          } />
+          <Route path="forgot-password" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading authentication..." />}>
+              <AuthPages.ForgotPassword />
+            </Suspense>
+          } />
+          <Route path="reset-password" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading authentication..." />}>
+              <AuthPages.ResetPassword />
+            </Suspense>
+          } />
+          
+          {/* Templates are accessible to non-authenticated users too */}
+          <Route path="templates" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading templates..." />}>
+              <DashboardPages.Templates />
+            </Suspense>
+          } />
+          
+          {/* Test routes only available in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <Route path="analytics-test" element={
+              <Suspense fallback={<Spinner fullScreen message="Loading test page..." />}>
+                <AnalyticsTest />
+              </Suspense>
+            } />
+          )}
+        </Route>
 
-          {/* Editor routes with authentication but no subscription requirement */}
-          <Route 
-            path="/editor" 
-            element={
-              <ProtectedRoute>
-                <EditorLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Editor />} />
-            <Route path=":projectId" element={<Editor />} />
-          </Route>
+        {/* Protected dashboard routes - grouped with dedicated suspense boundaries */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={
+            <Suspense fallback={<Spinner fullScreen message="Loading dashboard..." />}>
+              <DashboardPages.Dashboard />
+            </Suspense>
+          } />
+          <Route path="subscription" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading subscription details..." />}>
+              <DashboardPages.Subscription />
+            </Suspense>
+          } />
+          <Route path="profile" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading profile..." />}>
+              <DashboardPages.Profile />
+            </Suspense>
+          } />
+          <Route path="projects/:projectId" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading project details..." />}>
+              <DashboardPages.ProjectDetails />
+            </Suspense>
+          } />
+        </Route>
+        
+        {/* Project creation route */}
+        <Route
+          path="/projects/new"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={
+            <Suspense fallback={<Spinner fullScreen message="Loading project creator..." />}>
+              <DashboardPages.NewProject />
+            </Suspense>
+          } />
+        </Route>
 
-          {/* Fallback routes */}
-          <Route path="/404" element={<NotFound />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
-      </Suspense>
+        {/* Editor routes with authentication but no subscription requirement */}
+        <Route 
+          path="/editor" 
+          element={
+            <ProtectedRoute>
+              <EditorLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={
+            <Suspense fallback={<Spinner fullScreen message="Loading editor..." />}>
+              <Editor />
+            </Suspense>
+          } />
+          <Route path=":projectId" element={
+            <Suspense fallback={<Spinner fullScreen message="Loading editor..." />}>
+              <Editor />
+            </Suspense>
+          } />
+        </Route>
+
+        {/* Fallback routes */}
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
       
       {/* Debug tools - only in development */}
-      {process.env.NODE_ENV === 'development' && <AnalyticsDebugger />}
+      {process.env.NODE_ENV === 'development' && (
+        <Suspense fallback={null}>
+          <AnalyticsDebugger />
+        </Suspense>
+      )}
     </>
   );
 }

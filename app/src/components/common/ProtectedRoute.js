@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import Spinner from './Spinner';
+import useAuthApi from '../../hooks/useAuthApi';
+import { Spinner } from '../ui';
 
 const ProtectedRoute = ({ children, requireSubscription = false, requireAIAccess = false }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, loading } = useAuthApi();
   const location = useLocation();
 
   // Show loading spinner while checking authentication status
