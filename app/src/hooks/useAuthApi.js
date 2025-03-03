@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import useApi from './useApi';
-import * as analyticsService from '../services/analyticsService';
+import { useAnalytics } from './useAnalytics';
+
 
 /**
  * Hook for authentication API operations
@@ -8,6 +9,7 @@ import * as analyticsService from '../services/analyticsService';
  */
 const useAuthApi = () => {
   const authApi = useApi('/api/auth');
+  const analyticsService = useAnalytics();
   
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('byldur-token'));

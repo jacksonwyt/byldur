@@ -13,9 +13,6 @@ import { Spinner } from './components/ui';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import NotFound from './components/common/NotFound';
 
-// Development tools - only loaded in development
-const AnalyticsDebugger = lazy(() => import(/* webpackChunkName: "dev-tools" */ './components/analytics/AnalyticsDebugger'));
-const AnalyticsTest = lazy(() => import(/* webpackChunkName: "dev-tools" */ './pages/AnalyticsTest'));
 
 // Group 1: Public pages - marketing and authentication
 const Home = lazy(() => import(/* webpackChunkName: "home" */ './pages/Home'));
@@ -101,14 +98,6 @@ function App() {
             </Suspense>
           } />
           
-          {/* Test routes only available in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <Route path="analytics-test" element={
-              <Suspense fallback={<Spinner fullScreen message="Loading test page..." />}>
-                <AnalyticsTest />
-              </Suspense>
-            } />
-          )}
         </Route>
 
         {/* Protected dashboard routes - grouped with dedicated suspense boundaries */}
@@ -183,13 +172,6 @@ function App() {
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
-      
-      {/* Debug tools - only in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <Suspense fallback={null}>
-          <AnalyticsDebugger />
-        </Suspense>
-      )}
     </>
   );
 }

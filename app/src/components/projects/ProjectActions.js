@@ -5,7 +5,6 @@ import { FaEdit, FaEye, FaTrash, FaCopy, FaCloudUploadAlt, FaToggleOn, FaToggleO
 import PropTypes from 'prop-types';
 import { Button } from '../ui';
 import useProjectApi from '../../hooks/useProjectApi';
-import { useAnalytics } from '../../hooks/useAnalytics';
 
 const ActionContainer = styled.div`
   display: flex;
@@ -80,76 +79,81 @@ const DeploymentHistoryItem = styled.div`
 const ProjectActions = ({ projectId, isPublished = false }) => {
   const navigate = useNavigate();
   const { 
-    duplicateProject, 
     deleteProject, 
-    publishProject, 
-    unpublishProject, 
-    deployProject, 
-    getDeploymentHistory,
-    deployments,
-    loading 
+    duplicateProject, 
+    publishProject 
   } = useProjectApi();
-  const analytics = useAnalytics();
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeployModal, setShowDeployModal] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   
+  // Open project in editor
   const handleEdit = () => {
-    analytics.trackEditorOpened(projectId);
     navigate(`/editor/${projectId}`);
   };
   
+  // Preview project in new tab
   const handlePreview = () => {
-    analytics.trackFeatureUsage('project_preview', 'opened', projectId);
     window.open(`/preview/${projectId}`, '_blank');
   };
   
+  // Duplicate project
   const handleDuplicate = async () => {
-    if (loading) return;
+    setIsLoading(true);
     
-    const duplicated = await duplicateProject(projectId);
-    if (duplicated) {
-      analytics.trackProjectDuplicated(projectId);
-      navigate(`/projects/${duplicated.id}`);
+    try {
+      const newProject = await duplicateProject(projectId);
+      navigate(`/projects/${newProject.id}`);
+    } catch (err) {
+      console.error('Failed to duplicate project:', err);
+      setError('Failed to duplicate project');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Delete project
   const handleDeleteConfirm = async () => {
-    if (loading) return;
+    setIsLoading(true);
     
-    const deleted = await deleteProject(projectId);
-    if (deleted) {
-      analytics.trackProjectDeleted(projectId);
-      setShowDeleteModal(false);
+    try {
+      await deleteProject(projectId);
       navigate('/dashboard');
+    } catch (err) {
+      console.error('Failed to delete project:', err);
+      setError('Failed to delete project');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Publish/Unpublish project
   const handlePublishToggle = async () => {
-    if (loading) return;
+    setIsLoading(true);
     
-    if (isPublished) {
-      await unpublishProject(projectId);
-      analytics.trackProjectUnpublished(projectId);
-    } else {
-      await publishProject(projectId);
-      analytics.trackProjectPublished(projectId);
+    try {
+      await publishProject(projectId, !isPublished);
+      // Reload the page to show updated status
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to toggle publish state:', err);
+      setError('Failed to toggle publish state');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Deploy project
   const handleDeploy = async () => {
-    if (loading) return;
-    
-    await deployProject(projectId);
-    analytics.trackProjectDeployed(projectId);
-    setShowDeployModal(false);
+    // Deployment functionality will be implemented later
+    alert('Deployment will be available soon!');
   };
   
+  // Show deployment history
   const handleShowHistory = async () => {
-    analytics.trackFeatureUsage('deployment_history', 'viewed', projectId);
-    await getDeploymentHistory(projectId);
-    setShowHistoryModal(true);
+    // Deployment history functionality will be implemented later
+    alert('Deployment history will be available soon!');
   };
   
   return (
@@ -174,7 +178,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
         <ActionButton 
           variant="outline" 
           onClick={handleDuplicate}
-          disabled={loading}
+          disabled={isLoading}
           aria-label="Duplicate project"
         >
           <FaCopy /> Duplicate
@@ -183,7 +187,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
         <ActionButton 
           variant={isPublished ? "outline" : "primary"}
           onClick={handlePublishToggle}
-          disabled={loading}
+          disabled={isLoading}
           aria-label={isPublished ? "Unpublish project" : "Publish project"}
         >
           {isPublished ? <FaToggleOff /> : <FaToggleOn />} {isPublished ? "Unpublish" : "Publish"}
@@ -192,7 +196,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
         <ActionButton 
           variant="primary" 
           onClick={() => setShowDeployModal(true)}
-          disabled={loading || !isPublished}
+          disabled={isLoading || !isPublished}
           aria-label="Deploy project"
         >
           <FaCloudUploadAlt /> Deploy
@@ -201,7 +205,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
         <ActionButton 
           variant="outline" 
           onClick={handleShowHistory}
-          disabled={loading}
+          disabled={isLoading}
           aria-label="View deployment history"
         >
           <FaHistory /> History
@@ -210,7 +214,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
         <ActionButton 
           variant="danger" 
           onClick={() => setShowDeleteModal(true)}
-          disabled={loading}
+          disabled={isLoading}
           aria-label="Delete project"
         >
           <FaTrash /> Delete
@@ -233,7 +237,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
               <Button 
                 variant="danger" 
                 onClick={handleDeleteConfirm}
-                loading={loading}
+                loading={isLoading}
               >
                 Delete
               </Button>
@@ -258,7 +262,7 @@ const ProjectActions = ({ projectId, isPublished = false }) => {
               <Button 
                 variant="primary" 
                 onClick={handleDeploy}
-                loading={loading}
+                loading={isLoading}
               >
                 Deploy
               </Button>

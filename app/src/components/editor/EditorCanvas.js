@@ -7,7 +7,6 @@ import useProjectApi from '../../hooks/useProjectApi';
 import useAuthApi from '../../hooks/useAuthApi';
 import { useAI } from '../../hooks/useAI';
 import { useEditor } from '../../hooks/useEditor';
-import { useAnalytics } from '../../hooks/useAnalytics';
 import { Spinner } from '../ui';
 
 const EditorContainer = styled.div`
@@ -99,7 +98,6 @@ const EditorCanvas = forwardRef(({ onReady }, ref) => {
     loadContent,
     setIsDirty
   } = useEditor();
-  const analytics = useAnalytics();
 
   // Show notification helper
   const showNotification = (message, type = 'success', duration = 3000) => {
@@ -378,8 +376,6 @@ const EditorCanvas = forwardRef(({ onReady }, ref) => {
       
       // Track content save
       const saveTime = performance.now() - startTime;
-      analytics.trackContentSaved(projectId, { contentSize: (html?.length || 0) + (css?.length || 0) });
-      analytics.trackTiming('content_save', saveTime, { projectId });
       
       // Update editor state
       await saveCurrentState();
@@ -392,9 +388,6 @@ const EditorCanvas = forwardRef(({ onReady }, ref) => {
       return true;
     } catch (error) {
       console.error('Failed to save project:', error);
-      
-      // Track error
-      analytics.trackError('project_save', `Failed to save project: ${error.message || 'Unknown error'}`);
       
       showNotification(`Error saving project: ${error.message || 'Unknown error'}`, 'error', 5000);
       return false;

@@ -23,7 +23,6 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { useEditor } from '../../hooks/useEditor';
-import { useAnalytics } from '../../hooks/useAnalytics';
 
 const ToolsContainer = styled.div`
   width: ${props => props.collapsed ? '60px' : '240px'};
@@ -204,16 +203,9 @@ const HistoryButton = styled.button`
 
 const EditorTools = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState('components');
   const [activeDevice, setActiveDevice] = useState('desktop');
-  const [activeSection, setActiveSection] = useState('blocks');
-  const { 
-    editor, 
-    viewMode, 
-    changeViewMode, 
-    addComponent, 
-    selectedComponent 
-  } = useEditor();
-  const analytics = useAnalytics();
+  const { editor } = useEditor();
 
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
@@ -221,7 +213,6 @@ const EditorTools = () => {
 
   const handleDeviceChange = (device) => {
     setActiveDevice(device);
-    changeViewMode(device);
   };
 
   const handleSectionChange = (section) => {
@@ -230,9 +221,6 @@ const EditorTools = () => {
 
   const handleAddComponent = (type) => {
     if (!editor) return;
-    
-    // Track component addition
-    analytics.trackComponentAdded(type);
     
     // Add component to the canvas based on the type
     switch (type) {
@@ -297,10 +285,7 @@ const EditorTools = () => {
   };
 
   const handleAlignComponent = (align) => {
-    if (!editor || !selectedComponent) return;
-    
-    // Track style change
-    analytics.trackStyleChanged('text-align', align);
+    if (!editor) return;
     
     // Apply alignment style to selected component
     selectedComponent.addStyle({
@@ -310,13 +295,11 @@ const EditorTools = () => {
 
   const handleUndo = () => {
     if (!editor) return;
-    analytics.trackEditorEvent('undo');
     editor.UndoManager.undo();
   };
 
   const handleRedo = () => {
     if (!editor) return;
-    analytics.trackEditorEvent('redo');
     editor.UndoManager.redo();
   };
 

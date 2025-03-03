@@ -4,9 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import './styles/index.css';
 import App from './App';
 import { ThemeProvider } from './hooks/useTheme';
-import { AIProvider } from './contexts/AIContext';
-import { CollaborationProvider } from './contexts/CollaborationContext';
-import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { EditorProvider } from './hooks/useEditor';
 import reportWebVitals from './reportWebVitals';
 
@@ -15,15 +12,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <AIProvider>
-          <CollaborationProvider>
-            <AnalyticsProvider>
               <EditorProvider>
                 <App />
               </EditorProvider>
-            </AnalyticsProvider>
-          </CollaborationProvider>
-        </AIProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>

@@ -10,7 +10,6 @@ import useAuthApi from '../../hooks/useAuthApi';
 import useProjectApi from '../../hooks/useProjectApi';
 import { useTheme } from '../../hooks/useTheme';
 import { useEditor } from '../../hooks/useEditor';
-import { useAnalytics } from '../../hooks/useAnalytics';
 import { Button } from '../ui';
 
 const HeaderContainer = styled.header`
@@ -156,76 +155,62 @@ const Notification = styled.div`
 
 const EditorHeader = ({ toggleAIPanel, aiPanelOpen }) => {
   const { projectId } = useParams();
+  const { user } = useAuthApi();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthApi();
-  const { currentProject, publishProject, saveProjectContent } = useProjectApi();
-  const { darkMode } = useTheme();
-  const { 
-    editor,
-    isDirty,
-    saveCurrentState,
-    getHtmlContent,
-    getCssContent
-  } = useEditor();
-  const analytics = useAnalytics();
-  
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notification, setNotification] = useState({ visible: false, message: '' });
+  const { theme } = useTheme();
+  const { editor, html, css, js } = useEditor();
+  const { updateProject, publishProject } = useProjectApi();
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const uploadInputRef = useRef(null);
+
   // Toggle mobile menu
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
+    setShowMobileMenu(!showMobileMenu);
   };
   
   // Handle save project
   const handleSave = async () => {
-    if (!projectId || !isAuthenticated || !editor) return;
+    if (!editor || !projectId) return;
     
     setIsSaving(true);
-    showNotification('Saving project...');
     
     try {
-      // Get content from editor
-      const html = getHtmlContent();
-      const css = getCssContent();
-      
-      // Track save start time for performance timing
+      // Start timing the save
       const startTime = performance.now();
       
-      // Save to backend
-      await saveProjectContent(projectId, html, css);
+      // Get project data
+      const html = editor.getHtml();
+      const css = editor.getCss();
+      const js = editor.getJs();
       
-      // Track content save success
-      const saveTime = performance.now() - startTime;
-      analytics.trackContentSaved(projectId, { contentSize: (html?.length || 0) + (css?.length || 0) });
-      analytics.trackTiming('content_save', saveTime, { projectId });
+      // Save the project
+      await updateProject(projectId, { html, css, js });
       
-      // Update editor state
-      await saveCurrentState();
+      // Calculate save time
+      const saveTime = Math.round(performance.now() - startTime);
       
       showNotification('Project saved successfully');
     } catch (error) {
       console.error('Failed to save project:', error);
-      
-      // Track error
-      analytics.trackError('project_save', `Failed to save project: ${error.message || 'Unknown error'}`);
-      
-      showNotification('Error saving project: ' + (error.message || 'Unknown error'));
+      showNotification('Failed to save project. Please try again.', 'error');
     } finally {
       setIsSaving(false);
     }
   };
   
   // Show notification
-  const showNotification = (message) => {
+  const showNotification = (message, type = 'success') => {
     setNotification({
       visible: true,
-      message
+      message,
+      type
     });
     
     setTimeout(() => {
-      setNotification(prev => ({ ...prev, visible: false }));
+      setNotification(null);
     }, 3000);
   };
   
@@ -233,132 +218,46 @@ const EditorHeader = ({ toggleAIPanel, aiPanelOpen }) => {
   const handlePreview = () => {
     if (!projectId) return;
     
-    // Track preview action
-    analytics.trackFeatureUsage('project_preview', 'opened', projectId);
-    
-    // First save the project if needed
-    if (isDirty) {
-      handleSave();
-    }
-    
-    // Then open preview in new tab
     window.open(`/preview/${projectId}`, '_blank');
   };
   
   // Handle publish
   const handlePublish = async () => {
-    if (!projectId || !isAuthenticated) return;
+    if (!editor || !projectId) return;
+    
+    setIsPublishing(true);
     
     try {
-      // First save the project if needed
-      if (isDirty) {
-        await handleSave();
-      }
-      
-      // Then publish
-      await publishProject(projectId);
-      
-      // Track publish action
-      analytics.trackProjectPublished(projectId);
-      
-      showNotification('Project published successfully');
+      await publishProject(projectId, true);
+      showNotification('Project published successfully!');
     } catch (error) {
       console.error('Failed to publish project:', error);
-      
-      // Track error
-      analytics.trackError('project_publish', `Failed to publish project: ${error.message || 'Unknown error'}`);
-      
-      showNotification('Error publishing project: ' + (error.message || 'Unknown error'));
+      showNotification('Failed to publish project. Please try again.', 'error');
+    } finally {
+      setIsPublishing(false);
     }
   };
   
   // Handle GitHub sync
   const handleGitHubSync = () => {
-    // Track GitHub sync attempt
-    analytics.trackFeatureUsage('github_sync', 'attempted', projectId);
-    
-    // Implement GitHub sync functionality
-    showNotification('GitHub integration coming soon');
+    // Implementation will be added later
+    showNotification('GitHub sync will be available soon!', 'info');
   };
   
   // Handle download project
   const handleDownload = () => {
-    if (!currentProject) return;
+    if (!editor || !projectId) return;
     
-    // Track download action
-    analytics.trackFeatureUsage('project_download', 'downloaded', projectId);
-    
-    // First save current changes if needed
-    if (isDirty) {
-      handleSave();
-    }
-    
-    // Create a downloadable blob for the project content
-    const fileContent = JSON.stringify({
-      name: currentProject.name,
-      description: currentProject.description,
-      content: {
-        html: getHtmlContent(),
-        css: getCssContent()
-      },
-      createdAt: currentProject.createdAt,
-      updatedAt: new Date().toISOString()
-    }, null, 2);
-    
-    const blob = new Blob([fileContent], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a link and trigger the download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentProject.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.json`;
-    link.click();
-    
-    // Clean up
-    URL.revokeObjectURL(url);
-    showNotification('Project downloaded successfully');
+    // Export project as zip
+    // Implementation will be added
+    showNotification('Download feature will be available soon!', 'info');
   };
   
   // Handle upload project
   const handleUpload = () => {
-    // Track upload attempt
-    analytics.trackFeatureUsage('project_upload', 'attempted', projectId);
-    
-    // Create a file input element
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'application/json';
-    
-    // Handle file selection
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const projectData = JSON.parse(event.target.result);
-          
-          // Validate the imported data
-          if (!projectData.content || (!projectData.content.html && !projectData.content.css)) {
-            showNotification('Invalid project file format');
-            return;
-          }
-          
-          // Update the current project with the imported content
-          // This would require additional implementation to apply the imported content
-          showNotification('Project import feature coming soon');
-        } catch (error) {
-          console.error('Error parsing project file:', error);
-          showNotification('Error importing project: Invalid file format');
-        }
-      };
-      
-      reader.readAsText(file);
-    };
-    
-    // Trigger file selection dialog
-    fileInput.click();
+    if (uploadInputRef.current) {
+      uploadInputRef.current.click();
+    }
   };
   
   return (
@@ -369,28 +268,27 @@ const EditorHeader = ({ toggleAIPanel, aiPanelOpen }) => {
           <span>Byldur</span>
         </Brand>
         
-        {projectId && currentProject && (
+        {projectId && (
           <>
             <BackToDashboard to="/dashboard">
               <FaChevronLeft /> Back to Dashboard
             </BackToDashboard>
             <ProjectName>
-              {currentProject.name || 'Untitled Project'}
-              {isDirty && ' *'}
+              {projectId}
             </ProjectName>
           </>
         )}
       </div>
       
       <MobileMenuButton onClick={toggleMobileMenu}>
-        {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+        {showMobileMenu ? <FaTimes /> : <FaBars />}
       </MobileMenuButton>
       
-      <Actions mobileMenuOpen={mobileMenuOpen}>
+      <Actions mobileMenuOpen={showMobileMenu}>
         <ActionButton 
           primary 
           onClick={handleSave} 
-          disabled={isSaving || !isDirty}
+          disabled={isSaving}
         >
           {isSaving ? 'Saving...' : (
             <>
@@ -431,10 +329,12 @@ const EditorHeader = ({ toggleAIPanel, aiPanelOpen }) => {
         </ActionButton>
       </Actions>
       
-      <Notification visible={notification.visible}>
-        <FaCheckCircle />
-        {notification.message}
-      </Notification>
+      {notification && (
+        <Notification visible={!!notification}>
+          <FaCheckCircle />
+          {notification.message}
+        </Notification>
+      )}
     </HeaderContainer>
   );
 };

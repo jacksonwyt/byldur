@@ -15,7 +15,6 @@ import {
 } from 'react-icons/fa';
 import useProjectApi from '../hooks/useProjectApi';
 import useAuthApi from '../hooks/useAuthApi';
-import { useAnalytics } from '../hooks/useAnalytics';
 import { Button, Spinner, Badge } from '../components/ui';
 import { formatDate, getRelativeTimeString } from '../utils/dateUtils';
 import ProjectActions from '../components/projects/ProjectActions';
@@ -276,89 +275,76 @@ const getInitials = (name) => {
 const ProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { getCurrentUser } = useAuthApi();
-  const [user, setUser] = useState(null);
-  const analytics = useAnalytics();
+  const { user } = useAuthApi();
   const { 
-    fetchProject, 
+    getProject, 
     deleteProject, 
-    publishProject, 
-    unpublishProject, 
-    duplicateProject,
-    loading, 
-    error 
+    duplicateProject, 
+    publishProject,
   } = useProjectApi();
   
   const [project, setProject] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [notification, setNotification] = useState(null);
   
   useEffect(() => {
     const loadData = async () => {
+      if (!projectId) return;
+      
       try {
-        // Load project data
-        const projectData = await fetchProject(projectId);
-        setProject(projectData);
-        
-        // Load user data
-        const userData = await getCurrentUser();
-        setUser(userData);
-        
-        // Track project view
-        analytics.trackFeatureUsage('project_details', 'viewed', projectId);
+        const project = await getProject(projectId);
+        setProject(project);
+        setLoading(false);
       } catch (err) {
-        console.error('Error loading data:', err);
-        analytics.trackError('project_fetch', `Failed to load data: ${err.message}`);
+        console.error('Failed to load project data:', err);
+        setError('Failed to load project data. Please try again.');
+        setLoading(false);
       }
     };
     
-    if (projectId) {
-      loadData();
-    }
-  }, [projectId, fetchProject, getCurrentUser, analytics]);
-  
-  // Handle delete project
+    loadData();
+  }, [projectId, getProject]);
+
   const handleDeleteProject = async () => {
     try {
       await deleteProject(projectId);
-      analytics.trackProjectDeleted(projectId);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error deleting project:', err);
-      analytics.trackError('project_delete', `Failed to delete project: ${err.message}`);
+      console.error('Failed to delete project:', err);
+      setError(`Failed to delete project: ${err.message}`);
     }
   };
-  
-  // Handle duplicate project
+
   const handleDuplicateProject = async () => {
     try {
       const newProject = await duplicateProject(projectId);
-      analytics.trackProjectDuplicated(projectId);
-      navigate(`/dashboard/projects/${newProject.id}`);
+      navigate(`/projects/${newProject.id}`);
     } catch (err) {
-      console.error('Error duplicating project:', err);
-      analytics.trackError('project_duplicate', `Failed to duplicate project: ${err.message}`);
+      console.error('Failed to duplicate project:', err);
+      setError(`Failed to duplicate project: ${err.message}`);
     }
   };
   
-  // Handle publish/unpublish
   const handlePublishToggle = async () => {
+    if (!project) return;
+    
     try {
-      if (project.published) {
-        await unpublishProject(projectId);
-        analytics.trackProjectUnpublished(projectId);
+      if (project.isPublished) {
+        await publishProject(projectId, false);
       } else {
-        await publishProject(projectId);
-        analytics.trackProjectPublished(projectId);
+        await publishProject(projectId, true);
       }
       
       // Update local state
       setProject({
         ...project,
-        published: !project.published
+        isPublished: !project.isPublished
       });
     } catch (err) {
-      console.error('Error toggling publish state:', err);
-      analytics.trackError('project_publish_toggle', `Failed to toggle publish state: ${err.message}`);
+      console.error('Failed to toggle publish state:', err);
+      setError(`Failed to toggle publish state: ${err.message}`);
     }
   };
   
@@ -413,7 +399,7 @@ const ProjectDetails = () => {
       <ProjectHeader>
         <div>
           <ProjectTitle>{project.name}</ProjectTitle>
-          {project.published && (
+          {project.isPublished && (
             <Badge variant="success">
               <FaCheckCircle /> Published
             </Badge>
@@ -425,7 +411,7 @@ const ProjectDetails = () => {
             secondary 
             onClick={handlePublishToggle}
           >
-            {project.published ? (
+            {project.isPublished ? (
               <>
                 <FaCloudDownloadAlt /> Unpublish
               </>
@@ -479,7 +465,7 @@ const ProjectDetails = () => {
               
               <MetadataItem>
                 <h3>Status</h3>
-                <p>{project.published ? 'Published' : 'Draft'}</p>
+                <p>{project.isPublished ? 'Published' : 'Draft'}</p>
               </MetadataItem>
             </MetadataGrid>
             
@@ -505,7 +491,7 @@ const ProjectDetails = () => {
             <SectionTitle>Actions</SectionTitle>
             <ProjectActions 
               projectId={projectId} 
-              isPublished={project.published} 
+              isPublished={project.isPublished} 
             />
             
             <DangerZone>
@@ -516,7 +502,7 @@ const ProjectDetails = () => {
               
               <Button 
                 danger 
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setShowDeleteModal(true)}
               >
                 <FaTrash /> Delete Project
               </Button>
@@ -525,7 +511,7 @@ const ProjectDetails = () => {
         </div>
       </ContentGrid>
       
-      {showDeleteConfirm && (
+      {showDeleteModal && (
         <ConfirmationDialog>
           <DialogContent>
             <h2>Delete Project</h2>
@@ -537,7 +523,7 @@ const ProjectDetails = () => {
             <div className="actions">
               <Button 
                 secondary
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
               </Button>
