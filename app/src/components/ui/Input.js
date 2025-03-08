@@ -3,35 +3,37 @@ import styled, { css } from 'styled-components';
 
 const baseInputStyles = css`
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.25rem;
+  padding: 0.75rem 0;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
   font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: var(--input-bg-color);
+  transition: border-color 0.15s ease;
+  background-color: transparent;
   color: var(--text-color);
   
   &:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px var(--primary-color-light);
+    box-shadow: none;
   }
   
   &:disabled {
-    background-color: var(--disabled-bg-color);
+    opacity: 0.6;
     cursor: not-allowed;
   }
   
   &::placeholder {
     color: var(--text-color-secondary);
-    opacity: 0.7;
+    opacity: 0.6;
+    font-style: italic;
   }
   
   ${props => props.invalid && css`
-    border-color: var(--error-color);
+    border-color: var(--danger-color);
     
     &:focus {
-      box-shadow: 0 0 0 2px var(--error-color-light);
+      border-color: var(--danger-color);
     }
   `}
 `;
@@ -44,9 +46,11 @@ const InputContainer = styled.div`
 const StyledLabel = styled.label`
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-color);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
 `;
 
 const StyledInput = styled.input`

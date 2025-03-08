@@ -18,9 +18,9 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background-color: var(--card-bg-color);
-  border-radius: 0.5rem;
-  box-shadow: var(--modal-shadow, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+  background-color: var(--bg-color);
+  border-radius: 0;
+  box-shadow: var(--shadow-lg);
   width: ${props => {
     switch (props.size) {
       case 'small': return '400px';
@@ -35,6 +35,7 @@ const ModalContainer = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--border-color);
 `;
 
 const ModalHeader = styled.div`

@@ -2,26 +2,42 @@ import React from 'react';
 import styled from 'styled-components';
 
 const CardContainer = styled.div`
-  background-color: var(--card-bg-color);
-  border-radius: 0.5rem;
-  box-shadow: var(--card-shadow);
+  background-color: var(--bg-color);
+  border-radius: 0;
+  box-shadow: var(--shadow);
   padding: ${props => props.padding || '1.5rem'};
   margin-bottom: ${props => props.marginBottom || '0'};
   border: ${props => props.bordered 
     ? '1px solid var(--border-color)' 
     : props.highlight 
-      ? '2px solid var(--primary-color)' 
+      ? '1px solid var(--primary-color)' 
       : 'none'};
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
   height: ${props => props.fullHeight ? '100%' : 'auto'};
+  position: relative;
   
   &:hover {
     ${props => props.hoverable && `
-      transform: translateY(-4px);
-      box-shadow: var(--card-shadow-hover, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     `}
+  }
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: ${props => props.highlight ? '100%' : '0'};
+    height: 1px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+  }
+  
+  &:hover:after {
+    width: 100%;
   }
 `;
 

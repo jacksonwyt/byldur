@@ -128,13 +128,34 @@ const StyledButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: 0px;
   font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.15s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  outline: none;
   
   &:disabled {
     cursor: not-allowed;
+  }
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: currentColor;
+    transition: width 0.3s ease;
+  }
+  
+  &:hover:not(:disabled):after {
+    width: 100%;
   }
   
   /* Apply variant styles */
