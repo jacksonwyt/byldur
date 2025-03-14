@@ -1,10 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { useGesture } from 'react-use-gesture';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import useSound from 'use-sound';
 
-// Enhanced styled components with animations
+// Enhanced styled components (unchanged)
 const NavigationContainer = styled.div`
   position: relative;
   height: 10rem;
@@ -99,7 +98,7 @@ const NavControl = styled(motion.button)`
   }
 `;
 
-// Define animation variants for framer-motion - toned down
+// Animation variants (unchanged)
 const itemVariants = {
   active: {
     opacity: 1,
@@ -131,92 +130,121 @@ const EnhancedNavigation = ({
   const containerRef = useRef(null);
   const [playHover] = useSound('/sounds/hover-sound.mp3', { volume: 0.5 });
   const [playClick] = useSound('/sounds/click-sound.mp3', { volume: 0.5 });
-  
-  // Handle swipe gestures
-  const bindGesture = useGesture({
-    onDrag: ({ direction: [dx, dy], distance }) => {
-      if (distance > 50) { // Only trigger after a meaningful swipe distance
-        if (dy > 0 && activeIndex > 0) {
-          setActiveIndex(activeIndex - 1);
-          soundEnabled && playClick();
-        } else if (dy < 0 && activeIndex < services.length - 1) {
-          setActiveIndex(activeIndex + 1);
-          soundEnabled && playClick();
-        }
-      }
-    }
-  });
-  
-  // Handle keyboard navigation
+  const listY = useMotionValue(0); // Motion value for the list's y position
+  const [containerHeight, setContainerHeight] = useState(0); // Dynamic container height
+
+  // Set container height on mount and resize
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowUp') {
-        if (activeIndex > 0) {
-          setActiveIndex(activeIndex - 1);
-          soundEnabled && playClick();
-        }
-      } else if (e.key === 'ArrowDown') {
-        if (activeIndex < services.length - 1) {
-          setActiveIndex(activeIndex + 1);
-          soundEnabled && playClick();
-        }
+    const updateHeight = () => {
+      if (containerRef.current) {
+        setContainerHeight(containerRef.current.clientHeight);
       }
     };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeIndex, setActiveIndex, services.length, soundEnabled, playClick]);
-  
-  // Handle mouse wheel
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
+  // Sync listY with activeIndex changes (e.g., from controls or keyboard)
   useEffect(() => {
-    let lastWheelTime = 0;
-    const throttleTime = 600;
-    
+    const targetY = -activeIndex * containerHeight;
+    if (listY.get() !== targetY) {
+      animate(listY, targetY, {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        bounce: 0.25
+      });
+    }
+  }, [activeIndex, containerHeight, listY]);
+
+  // Handle drag end with snapping
+  const handleDragEnd = () => {
+    const currentY = listY.get();
+    const itemHeight = containerHeight;
+    let targetIndex = Math.round(-currentY / itemHeight);
+    targetIndex = Math.max(0, Math.min(targetIndex, services.length - 1));
+    const targetY = -targetIndex * itemHeight;
+    animate(listY, targetY, {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      bounce: 0.25
+    });
+    setActiveIndex(targetIndex);
+    soundEnabled && playClick();
+  };
+
+  // Handle wheel scrolling with snapping
+  useEffect(() => {
+    let timeoutId;
+    const minY = - (services.length - 1) * containerHeight;
+    const maxY = 0;
+
     const handleWheel = (e) => {
       e.preventDefault();
-      
-      const now = Date.now();
-      if (now - lastWheelTime < throttleTime) {
-        return;
-      }
-      
-      if (e.deltaY > 0 && activeIndex < services.length - 1) {
-        setActiveIndex(activeIndex + 1);
+      const newY = Math.min(maxY, Math.max(minY, listY.get() - e.deltaY));
+      listY.set(newY);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const currentY = listY.get();
+        const itemHeight = containerHeight;
+        let targetIndex = Math.round(-currentY / itemHeight);
+        targetIndex = Math.max(0, Math.min(targetIndex, services.length - 1));
+        const targetY = -targetIndex * itemHeight;
+        animate(listY, targetY, {
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          bounce: 0.25
+        });
+        setActiveIndex(targetIndex);
         soundEnabled && playClick();
-        lastWheelTime = now;
-      } else if (e.deltaY < 0 && activeIndex > 0) {
-        setActiveIndex(activeIndex - 1);
-        soundEnabled && playClick();
-        lastWheelTime = now;
-      }
+      }, 150); // Snap after 150ms of inactivity
     };
-    
+
     const container = containerRef.current;
     if (container) {
       container.addEventListener('wheel', handleWheel, { passive: false });
     }
-    
+
     return () => {
       if (container) {
         container.removeEventListener('wheel', handleWheel);
       }
+      clearTimeout(timeoutId);
     };
+  }, [containerHeight, services.length, listY, setActiveIndex, soundEnabled, playClick]);
+
+  // Handle keyboard navigation (unchanged)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowUp' && activeIndex > 0) {
+        setActiveIndex(activeIndex - 1);
+        soundEnabled && playClick();
+      } else if (e.key === 'ArrowDown' && activeIndex < services.length - 1) {
+        setActiveIndex(activeIndex + 1);
+        soundEnabled && playClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeIndex, setActiveIndex, services.length, soundEnabled, playClick]);
-  
-  // Determine which variant to use for each item
+
+  // Helper functions (unchanged)
   const getItemVariant = (index) => {
     const distance = Math.abs(index - activeIndex);
     if (distance === 0) return "active";
     if (distance === 1) return "adjacent";
     return "distant";
   };
-  
+
   const handleItemClick = (index) => {
     setActiveIndex(index);
     onServiceClick(index);
     soundEnabled && playClick();
   };
-  
+
   const handleControlClick = (direction) => {
     if (direction === 'up' && activeIndex > 0) {
       setActiveIndex(activeIndex - 1);
@@ -225,13 +253,19 @@ const EnhancedNavigation = ({
     }
     soundEnabled && playClick();
   };
-  
+
   return (
-    <NavigationContainer ref={containerRef} {...bindGesture()}>
+    <NavigationContainer ref={containerRef}>
       <ServicesList
         count={services.length}
-        animate={{ y: `${-activeIndex * (100 / services.length)}%` }}
-        transition={{ type: "spring", stiffness: 250, damping: 25 }}
+        style={{ y: listY }}
+        drag="y"
+        dragConstraints={{
+          top: containerHeight ? - (services.length - 1) * containerHeight : 0,
+          bottom: 0
+        }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
       >
         {services.map((service, index) => (
           <ServiceItem
@@ -249,7 +283,7 @@ const EnhancedNavigation = ({
           </ServiceItem>
         ))}
       </ServicesList>
-      
+
       <NavControls>
         <NavControl
           onClick={() => handleControlClick('up')}
