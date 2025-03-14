@@ -3,7 +3,7 @@
   "outputDirectory": "build",
   "framework": "create-react-app",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api-serverless/(.*)", "destination": "/api-serverless/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "build": {
@@ -12,8 +12,6 @@
     }
   },
   "env": {
-    "STRIPE_SECRET_KEY": "@stripe_secret_key",
-    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "@stripe_publishable_key",
-    "NEXT_PUBLIC_URL": "@site_url"
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_publishable_key_placeholder"
   }
 }

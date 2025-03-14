@@ -158,7 +158,7 @@
             const sessionId = urlParams.get('session_id');
             
             // Verify the session with the server
-            fetch(`/api/verify-purchase?session_id=${sessionId}`)
+            fetch(`/api-serverless/verify-purchase?session_id=${sessionId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.verified) {

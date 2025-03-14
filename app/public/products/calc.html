@@ -314,7 +314,7 @@
         }
         
         // Initialize Stripe
-        const stripe = Stripe('{process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}');
+        const stripe = Stripe('pk_live_51PySf3RvFBcFOKLYLIQNsSfWKuHjAHQ65bHjVLxGQhCwf8LdjH9WJxCSzvlPidHRtuIRwgtwjBYqXq2bzDP1SZ2R00v3hK4p5i'); // Replace with your actual publishable key
         
         // Handle checkout button click
         document.getElementById('buy-button').addEventListener('click', function() {
@@ -325,7 +325,7 @@
             this.textContent = 'Processing...';
             
             // Create a checkout session through the Vercel API endpoint
-            fetch('/api/checkout', {
+            fetch('/api-serverless/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
