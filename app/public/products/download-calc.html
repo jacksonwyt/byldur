@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Your Purchase!</title>
+    <style>
+        body {
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+            margin: 0;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 40px;
+            margin: 20px;
+        }
+        
+        h1 {
+            color: #e67e22;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .download-button {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+        
+        .download-button:hover {
+            background-color: #d35400;
+            transform: scale(1.05);
+        }
+        
+        .download-button:active {
+            transform: scale(0.95);
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            fill: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        
+        <h1>Thank You for Your Purchase!</h1>
+        
+        <p>Your transaction has been completed successfully. Your calculator is ready to download.</p>
+        
+        <p>Click the button below to download the calculator. You can save this file to your computer and open it in any web browser.</p>
+        
+        <button class="download-button" id="download-button">
+            Download Calculator
+        </button>
+    </div>
+
+    <script>
+        // Function to handle the calculator download
+        function downloadCalculator() {
+            // Create a download link
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/products/calc.html', true);
+            xhr.responseType = 'blob';
+            
+            xhr.onload = function() {
+                if (this.status === 200) {
+                    // Create a clean version of the calculator (without payment components)
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        let html = e.target.result;
+                        
+                        // Remove the payment-related code and UI
+                        html = html.replace(/<script src="https:\/\/js\.stripe\.com\/v3\/"><\/script>/, '');
+                        
+                        // Create simpler version by removing the purchase container
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Remove purchase-related elements
+                        const purchaseContainer = doc.querySelector('.purchase-container');
+                        if (purchaseContainer) {
+                            purchaseContainer.parentNode.removeChild(purchaseContainer);
+                        }
+                        
+                        // Remove all payment script code
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.textContent.includes('stripe') || 
+                                script.textContent.includes('checkout') || 
+                                script.textContent.includes('download')) {
+                                script.textContent = script.textContent.split('// Initialize Stripe')[0];
+                            }
+                        });
+                        
+                        // Create the downloadable file blob
+                        const cleanHtml = new XMLSerializer().serializeToString(doc);
+                        const blob = new Blob([cleanHtml], { type: 'text/html' });
+                        
+                        // Create download link
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = URL.createObjectURL(blob);
+                        downloadLink.download = 'calc.html';
+                        
+                        // Trigger download
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                    };
+                    reader.readAsText(this.response);
+                }
+            };
+            
+            xhr.send();
+        }
+        
+        // Attach event listener to the download button
+        document.getElementById('download-button').addEventListener('click', downloadCalculator);
+        
+        // Verify the session ID and auto-download after successful purchase
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true' && urlParams.get('session_id')) {
+            const sessionId = urlParams.get('session_id');
+            
+            // Verify the session with the server
+            fetch(`/api/verify-purchase?session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.verified) {
+                        // Auto-download after 2 seconds if the purchase is verified
+                        setTimeout(downloadCalculator, 2000);
+                    } else {
+                        alert('Could not verify your purchase. Please contact support.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying purchase:', error);
+                    // We'll still allow download in case the verification API fails
+                    setTimeout(downloadCalculator, 2000);
+                });
+        }
+    </script>
+</body>
+</html>

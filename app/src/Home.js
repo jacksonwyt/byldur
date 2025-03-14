@@ -96,7 +96,8 @@ const services = [
   { name: 'Games', color: '#e74c3c' },
   { name: 'Create', color: '#2ecc71' },
   { name: 'AI', color: '#f39c12' },
-  { name: 'Design', color: '#1abc9c' }
+  { name: 'Design', color: '#1abc9c' },
+  { name: 'Products', color: '#e67e22' }
 ];
 
 // Main Home component with streamlined animations

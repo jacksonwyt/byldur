@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>calc - Sleek Command-Line Style Calculator</title>
+    <style>
+        body {
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            max-width: 800px;
+        }
+        
+        .product-info {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            width: 100%;
+            color: #ffffff;
+        }
+        
+        .product-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .price {
+            font-size: 24px;
+            color: #e67e22;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .description {
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .features {
+            margin-bottom: 30px;
+        }
+        
+        .features h3 {
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        .features ul {
+            padding-left: 20px;
+        }
+        
+        .features li {
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+        
+        .purchase-container {
+            margin-top: 20px;
+        }
+        
+        .buy-button {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .buy-button:hover {
+            background-color: #d35400;
+            transform: scale(1.05);
+        }
+        
+        .buy-button:active {
+            transform: scale(0.95);
+        }
+        
+        .calculator {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            width: 300px;
+        }
+        
+        .brand {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .brand h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+        
+        .display {
+            background-color: #000000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            padding: 15px;
+            text-align: right;
+            font-family: "Courier New", monospace;
+            font-size: 24px;
+            height: 30px;
+            overflow: hidden;
+            color: #00ff00;
+            box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.2);
+            position: relative;
+        }
+        
+        .display::before {
+            content: ">";
+            position: absolute;
+            left: 10px;
+            color: #00ff00;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 18px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #3a3a3a;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+            background-color: #444;
+        }
+        
+        .operator {
+            background-color: #222;
+            color: #ffffff;
+        }
+        
+        .equals {
+            background-color: #444;
+            color: white;
+        }
+        
+        .clear {
+            background-color: #333;
+            color: white;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            
+            .product-info {
+                width: 400px;
+            }
+        }
+    </style>
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Stripe handler for product checkout -->
+    <script src="/products/stripe-handler.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="product-info">
+            <h1 class="product-title">Calc</h1>
+            <div class="price">$5.00</div>
+            <div class="description">
+                A sleek, command-line style calculator that brings a modern aesthetic to your everyday calculations. With its retro-futuristic design and robust functionality, Calc is perfect for both casual use and complex calculations.
+            </div>
+            
+            <div class="features">
+                <h3>Features:</h3>
+                <ul>
+                    <li>Clean terminal-inspired interface</li>
+                    <li>Support for basic and complex operations</li>
+                    <li>Parentheses for order of operations</li>
+                    <li>Precision decimal handling</li>
+                    <li>Error prevention and handling</li>
+                </ul>
+            </div>
+            
+            <div class="purchase-container">
+                <!-- Stripe checkout button -->
+                <button class="buy-button" id="buy-button">
+                    Buy Now - $5.00
+                </button>
+            </div>
+        </div>
+        
+        <!-- Calculator Demo -->
+        <div class="calculator">
+            <div class="brand">
+                <h1>calc</h1>
+            </div>
+            <div class="display" id="display">0</div>
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">C</button>
+                <button class="operator" onclick="appendToDisplay('(')">(</button>
+                <button class="operator" onclick="appendToDisplay(')')">)</button>
+                <button class="operator" onclick="appendToDisplay('/')">/</button>
+                
+                <button onclick="appendToDisplay('7')">7</button>
+                <button onclick="appendToDisplay('8')">8</button>
+                <button onclick="appendToDisplay('9')">9</button>
+                <button class="operator" onclick="appendToDisplay('*')">*</button>
+                
+                <button onclick="appendToDisplay('4')">4</button>
+                <button onclick="appendToDisplay('5')">5</button>
+                <button onclick="appendToDisplay('6')">6</button>
+                <button class="operator" onclick="appendToDisplay('-')">-</button>
+                
+                <button onclick="appendToDisplay('1')">1</button>
+                <button onclick="appendToDisplay('2')">2</button>
+                <button onclick="appendToDisplay('3')">3</button>
+                <button class="operator" onclick="appendToDisplay('+')">+</button>
+                
+                <button onclick="appendToDisplay('0')">0</button>
+                <button onclick="appendToDisplay('.')">.</button>
+                <button onclick="backspace()">⌫</button>
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Calculator functionality
+        let displayValue = '0';
+        const display = document.getElementById('display');
+        
+        function updateDisplay() {
+            display.textContent = displayValue;
+        }
+        
+        function appendToDisplay(value) {
+            if (displayValue === '0' && value !== '.') {
+                displayValue = value;
+            } else {
+                displayValue += value;
+            }
+            updateDisplay();
+        }
+        
+        function clearDisplay() {
+            displayValue = '0';
+            updateDisplay();
+        }
+        
+        function backspace() {
+            if (displayValue.length > 1) {
+                displayValue = displayValue.slice(0, -1);
+            } else {
+                displayValue = '0';
+            }
+            updateDisplay();
+        }
+        
+        function calculate() {
+            try {
+                // Using Function constructor for evaluation - safer than eval
+                displayValue = Function('"use strict"; return (' + displayValue + ')')().toString();
+                
+                // Round to avoid floating point issues
+                if (displayValue.includes('.')) {
+                    const parts = displayValue.split('.');
+                    if (parts[1].length > 8) {
+                        displayValue = parseFloat(displayValue).toFixed(8);
+                    }
+                }
+            } catch (error) {
+                displayValue = 'Error';
+            }
+            updateDisplay();
+        }
+        
+        // Initialize Stripe
+        const stripe = Stripe('{process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}');
+        
+        // Handle checkout button click
+        document.getElementById('buy-button').addEventListener('click', function() {
+            // Disable the button to prevent multiple clicks
+            this.disabled = true;
+            
+            // Show loading state
+            this.textContent = 'Processing...';
+            
+            // Create a checkout session through the Vercel API endpoint
+            fetch('/api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product: 'calc'
+                }),
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(session) {
+                // Redirect to Stripe Checkout
+                return stripe.redirectToCheckout({ sessionId: session.id });
+            })
+            .then(function(result) {
+                // If redirectToCheckout fails due to a browser or network
+                // error, display the localized error message to your customer
+                if (result.error) {
+                    alert(result.error.message);
+                    document.getElementById('buy-button').disabled = false;
+                    document.getElementById('buy-button').textContent = 'Buy Now - $5.00';
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+                document.getElementById('buy-button').disabled = false;
+                document.getElementById('buy-button').textContent = 'Buy Now - $5.00';
+            });
+        });
+    </script>
+</body>
+</html>

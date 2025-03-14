@@ -149,6 +149,7 @@ const CTAButton = styled(motion.button)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
   
   svg {
     margin-left: 8px;
@@ -267,6 +268,19 @@ const serviceContent = {
       "Design-to-code conversion"
     ],
     cta: "Design Something"
+  },
+  Products: {
+    title: "Products",
+    subheader: "Digital tools that simplify your life",
+    description: "Browse our collection of digital products designed to enhance your productivity and creativity. From calculators to specialized tools, find the perfect solution for your needs.",
+    features: [
+      "Calc: Sleek command-line style calculator ($5)",
+      "Intuitive user interfaces",
+      "No subscriptions - one-time purchases",
+      "Regular updates and improvements",
+      "Cross-platform compatibility"
+    ],
+    cta: "Buy Now"
   }
 };
 
@@ -334,6 +348,12 @@ const ContentPages = ({
                 color={service.color}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  if (activeService === 'Products') {
+                    // Open the calculator product page
+                    window.open('/products/calc.html', '_blank');
+                  }
+                }}
               >
                 {content.cta}
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
