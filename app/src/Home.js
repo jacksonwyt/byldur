@@ -103,7 +103,7 @@ const services = [
 const Home = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [contentOpen, setContentOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled] = useState(true);
   const [activeService, setActiveService] = useState(null);
   const [showLanding, setShowLanding] = useState(true);
   const containerRef = useRef(null);
