@@ -1,8 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Box, PerspectiveCamera } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
-import * as THREE from 'three';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 

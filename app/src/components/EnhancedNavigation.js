@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGesture } from 'react-use-gesture';
 import useSound from 'use-sound';
 
 // Enhanced styled components with animations
 const NavigationContainer = styled.div`
   position: relative;
-  height: 12rem;
+  height: 10rem;
   overflow: visible;
-  margin-left: 2rem;
-  width: 450px;
+  margin-left: 1.5rem;
+  width: 350px;
   
   @media (max-width: 768px) {
-    height: 8rem;
-    width: 280px;
-    margin-left: 1rem;
+    height: 7rem;
+    width: 250px;
+    margin-left: 0.8rem;
   }
 `;
 
@@ -28,7 +28,7 @@ const ServicesList = styled(motion.div)`
 `;
 
 const ServiceItem = styled(motion.div)`
-  font-size: 7rem;
+  font-size: 5.5rem;
   font-weight: 600;
   height: ${props => 100 / props.count}%;
   width: 100%;
@@ -37,48 +37,31 @@ const ServiceItem = styled(motion.div)`
   justify-content: flex-start;
   color: ${props => props.color};
   text-transform: lowercase;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
   white-space: nowrap;
   user-select: none;
   cursor: pointer;
-  padding-right: 30px;
+  padding-right: 20px;
   position: relative;
   
   @media (max-width: 768px) {
-    font-size: 4.5rem;
-    padding-right: 25px;
-  }
-`;
-
-const ItemBackground = styled(motion.div)`
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 80%;
-  width: 5px;
-  background-color: ${props => props.color};
-  border-radius: 3px;
-  opacity: ${props => props.active ? 1 : 0};
-  
-  @media (max-width: 768px) {
-    left: -15px;
-    width: 3px;
+    font-size: 3.8rem;
+    padding-right: 15px;
   }
 `;
 
 const NavControls = styled.div`
   position: absolute;
-  bottom: -40px;
+  bottom: -35px;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 12px;
   
   @media (max-width: 768px) {
-    bottom: -35px;
-    gap: 10px;
+    bottom: -30px;
+    gap: 8px;
   }
 `;
 
@@ -86,8 +69,8 @@ const NavControl = styled(motion.button)`
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -101,53 +84,40 @@ const NavControl = styled(motion.button)`
   }
   
   svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
   
   @media (max-width: 768px) {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     
     svg {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
     }
   }
 `;
 
-const BreadcrumbNav = styled.div`
-  position: absolute;
-  bottom: -40px;
-  left: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  
-  @media (max-width: 768px) {
-    bottom: -35px;
-    font-size: 0.8rem;
-  }
-`;
-
-// Define animation variants for framer-motion
+// Define animation variants for framer-motion - toned down
 const itemVariants = {
   active: {
     opacity: 1,
     scale: 1,
-    textShadow: "0 0 15px currentColor",
-    transition: { duration: 0.5 }
+    textShadow: "0 0 6px currentColor",
+    transition: { duration: 0.4 }
   },
   adjacent: {
     opacity: 0.4,
-    scale: 0.9,
+    scale: 0.95,
     textShadow: "0 0 0px currentColor",
-    transition: { duration: 0.3 }
+    transition: { duration: 0.2 }
   },
   distant: {
-    opacity: 0.1,
-    scale: 0.8,
+    opacity: 0.2,
+    scale: 0.9,
     textShadow: "0 0 0px currentColor",
-    transition: { duration: 0.3 }
+    transition: { duration: 0.2 }
   }
 };
 
@@ -261,7 +231,7 @@ const EnhancedNavigation = ({
       <ServicesList
         count={services.length}
         animate={{ y: `${-activeIndex * (100 / services.length)}%` }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: "spring", stiffness: 250, damping: 25 }}
       >
         {services.map((service, index) => (
           <ServiceItem
@@ -273,18 +243,8 @@ const EnhancedNavigation = ({
             variants={itemVariants}
             initial="distant"
             animate={getItemVariant(index)}
-            whileHover={{ scale: getItemVariant(index) === "active" ? 1.05 : 0.95 }}
+            whileHover={{ scale: getItemVariant(index) === "active" ? 1.02 : 0.98 }}
           >
-            <ItemBackground 
-              color={service.color} 
-              active={index === activeIndex}
-              initial={{ scaleY: 0 }}
-              animate={{ 
-                scaleY: index === activeIndex ? 1 : 0,
-                opacity: index === activeIndex ? 1 : 0
-              }}
-              transition={{ duration: 0.3 }}
-            />
             {service.name}
           </ServiceItem>
         ))}
@@ -294,8 +254,8 @@ const EnhancedNavigation = ({
         <NavControl
           onClick={() => handleControlClick('up')}
           disabled={activeIndex === 0}
-          whileHover={{ scale: 1.1, borderColor: 'rgba(255, 255, 255, 0.5)' }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05, borderColor: 'rgba(255, 255, 255, 0.5)' }}
+          whileTap={{ scale: 0.95 }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 14l5-5 5 5H7z"/>
@@ -304,20 +264,16 @@ const EnhancedNavigation = ({
         <NavControl
           onClick={() => handleControlClick('down')}
           disabled={activeIndex === services.length - 1}
-          whileHover={{ scale: 1.1, borderColor: 'rgba(255, 255, 255, 0.5)' }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05, borderColor: 'rgba(255, 255, 255, 0.5)' }}
+          whileTap={{ scale: 0.95 }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 10l5 5 5-5H7z"/>
           </svg>
         </NavControl>
       </NavControls>
-      
-      <BreadcrumbNav>
-        byldur / {services[activeIndex].name.toLowerCase()}
-      </BreadcrumbNav>
     </NavigationContainer>
   );
 };
 
-export default EnhancedNavigation; 
+export default EnhancedNavigation;

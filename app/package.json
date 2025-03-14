@@ -6,8 +6,11 @@
     "@react-spring/three": "^9.7.5",
     "@react-three/drei": "^9.88.13",
     "@react-three/fiber": "^8.15.11",
+    "@react-three/postprocessing": "^2.15.1",
     "framer-motion": "^10.16.5",
     "gsap": "^3.12.2",
+    "leva": "^0.9.35",
+    "r3f-perf": "^7.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
@@ -16,11 +19,16 @@
     "styled-components": "^6.1.1",
     "three": "^0.159.0",
     "three-mesh-bvh": "^0.8.0",
-    "use-sound": "^4.0.1"
+    "use-sound": "^4.0.1",
+    "zustand": "^4.4.7"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "test": "react-scripts test",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "eslintConfig": {
     "extends": [
@@ -38,5 +46,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "source-map-explorer": "^2.5.3"
   }
 }

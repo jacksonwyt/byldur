@@ -1,8 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Box, PerspectiveCamera, OrbitControls } from '@react-three/drei';
+import { Box, PerspectiveCamera } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
-import * as THREE from 'three';
 import styled from 'styled-components';
 
 const CubeContainer = styled.div`
@@ -40,7 +39,6 @@ const AnimatedBox = animated(Box);
 
 function AnimatedCube({ onClick, hoverState, setHoverState }) {
   const meshRef = useRef();
-  const [active, setActive] = useState(false);
   const colors = [
     '#3498db', // blue 
     '#9b59b6', // purple
