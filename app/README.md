@@ -1,139 +1,69 @@
-# Byldur - AI-Powered Website Builder (React Version)
+# Byldur - Interactive Website
 
-This is the React implementation of the Byldur website builder application. It provides a modern, component-based architecture with improved maintainability and user experience.
+A modern, interactive, and professional website with enhanced navigation and user experience.
 
 ## Features
 
-- AI-powered website building using Claude API
-- Website editor based on GrapesJS
-- User authentication system
-- Project creation and management
-- Subscription system with Stripe integration
-- Credit system for AI usage
-- Responsive design
+- **Interactive 3D Cube**: A colorful, animated 3D cube at the top that serves as both a decorative element and a home button
+- **Enhanced Navigation**: Smooth, animated navigation with multiple ways to interact (scroll, click, swipe)
+- **Visual Feedback**: Improved visual cues with animations, transitions, and micro-interactions
+- **Content Pages**: Dedicated content sections for each service category
+- **Responsive Design**: Works well on both desktop and mobile devices
+- **Accessibility**: Improved keyboard navigation and focus states
+- **Sound Effects**: Optional sound feedback for user interactions
 
-## Technology Stack
+## Installation
 
-- **Frontend:**
-  - React 18 with functional components and hooks
-  - React Router for navigation
-  - Context API for state management
-  - Styled Components for styling
-  - GrapesJS for website builder
-  
-- **Backend:**
-  - Node.js with Express
-  - PostgreSQL with Sequelize ORM
-  - JWT authentication
-  - Stripe for payment processing
-  - Claude API for AI text generation
+1. Clone the repository
+2. Install dependencies:
 
-## Project Structure
-
-```
-app/
-├── public/                # Static assets
-├── src/
-│   ├── components/        # React components
-│   │   ├── common/        # Shared UI components
-│   │   ├── editor/        # Website editor components
-│   │   ├── layouts/       # Layout components
-│   │   └── navigation/    # Navigation components
-│   ├── contexts/          # React Context API providers
-│   ├── hooks/             # Custom React hooks
-│   ├── pages/             # Page components
-│   ├── services/          # API service functions
-│   ├── styles/            # Global styles
-│   ├── utils/             # Utility functions
-│   ├── App.js             # Main App component
-│   └── index.js           # Application entry point
-├── package.json           # Dependencies and scripts
-└── README.md              # Documentation
+```bash
+cd app
+npm install
 ```
 
-## Getting Started
+3. Start the development server:
 
-### Prerequisites
+```bash
+npm start
+```
 
-- Node.js (v14 or higher)
-- npm or yarn
-- PostgreSQL database
+4. The website will be available at [http://localhost:3000](http://localhost:3000)
 
-### Installation
+## Usage
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/username/byldur.git
-   cd byldur
-   ```
+### Navigation
 
-2. Install backend dependencies:
-   ```
-   cd server
-   npm install
-   ```
+- **Mouse wheel**: Scroll up/down to navigate between services
+- **Arrow keys**: Use up/down arrow keys to navigate
+- **Click**: Click directly on a service name to select it
+- **Dot indicators**: Click on the dots on the right to jump to a specific service
+- **Mini navigation**: Use the dots at the bottom for quick access
+- **Swipe**: On touch devices, swipe up/down to navigate
 
-3. Install frontend dependencies:
-   ```
-   cd ../app
-   npm install
-   ```
+### Interaction
 
-4. Set up environment variables:
-   - Create a `.env` file in the `server` directory based on the provided `.env.example`
-   - Ensure all required API keys are correctly set up for Stripe, Claude AI, etc.
+- **3D Cube**: Click the colorful cube at the top to return to the home state
+- **Service click**: Click on a service name to open its detailed content page
+- **Sound toggle**: Toggle sound effects on/off using the sound button in the top right
+- **Search**: Access search functionality via the search button in the top right
 
-5. Start the development server:
-   ```
-   # Start the backend API server (from server directory)
-   npm run dev
-   
-   # In a new terminal, start the React frontend (from app directory)
-   npm start
-   ```
+## Customization
 
-6. Open [http://localhost:3000](http://localhost:3000) to view the application in your browser.
+- Edit the services array in `Home.js` to change the available services and their colors
+- Modify the service content in `ContentPages.js` to update the information displayed for each service
+- Adjust styling in the styled components to change the appearance
 
-## Development
+## Technical Details
 
-### Backend API Server
+This website uses:
 
-The backend API runs on port 5000 by default. It serves as a RESTful API for the React frontend.
-
-### Frontend Development
-
-The React development server includes hot-reloading and will automatically proxy API requests to the backend server.
-
-## Deployment
-
-### Production Build
-
-1. Create a production build of the React app:
-   ```
-   cd app
-   npm run build
-   ```
-
-2. The built files will be in the `app/build` directory, which can be served by the Express backend.
-
-3. Configure the backend to serve the React build files in production:
-   ```javascript
-   if (process.env.NODE_ENV === 'production') {
-     app.use(express.static(path.join(__dirname, '../app/build')));
-     app.get('*', (req, res) => {
-       res.sendFile(path.join(__dirname, '../app/build', 'index.html'));
-     });
-   }
-   ```
+- React for UI components
+- Three.js and React Three Fiber for 3D elements
+- Framer Motion for animations
+- Styled Components for styling
+- Use Sound for audio feedback
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgements
-
-- [GrapesJS](https://grapesjs.com/) - Web Builder Framework
-- [Anthropic Claude](https://www.anthropic.com/claude) - AI Assistant API
-- [Stripe](https://stripe.com/) - Payment Processing
-- [React](https://reactjs.org/) - UI Library
-- [Express](https://expressjs.com/) - Backend Framework 
+MIT 

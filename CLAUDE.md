@@ -11,10 +11,12 @@
 - Import order: External libraries → Internal contexts/hooks → Components → Utils
 - Naming: PascalCase for components, camelCase for functions/variables/hooks
 - Error handling: Try/catch in async functions, ErrorBoundary for React components
-- API calls: Use custom hooks (useApi, useAuthApi, useProjectApi)
+- API calls: Use custom hooks (useApi, useAuthApi, useProjectApi, usePaymentApi)
 - Testing: Use renderWithProviders from test-utils.js for component tests
 
 ## Project Structure
 - Components organized by domain (common, editor, layouts, etc.)
 - Context providers with factory pattern using custom hooks
 - Separate API service modules for different domains
+- Custom hooks in /hooks directory for reusable logic
+- Utility functions in /utils for common operations
